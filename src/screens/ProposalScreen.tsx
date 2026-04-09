@@ -1,35 +1,36 @@
-import { useState, useEffect } from 'react'; // useEffect used below
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { AllocationBar } from '../components/AllocationBar';
-import type { AppState, Scenario, Segment } from '../types';
+import { PlanningProgress } from '../components/PlanningProgress';
+import { ReasoningPanel } from '../components/ReasoningPanel';
+import type { AppState, Scenario, Segment, PlanningStep, ReasoningEntry } from '../types';
 import { generateNarrative, generateTradeoff } from '../data/defaults';
 import { useAudio } from '../hooks/useAudio';
 
 interface ProposalScreenProps {
   state: AppState;
   prevSegments: Segment[];
+  reasoning: ReasoningEntry[];
   onSegmentsChange: (segments: Segment[]) => void;
   onLock: () => void;
   onSaveScenario: (scenario: Scenario) => void;
   onViewScenarios: () => void;
+  onStepClick: (step: PlanningStep) => void;
 }
 
 export function ProposalScreen({
   state,
   prevSegments,
+  reasoning,
   onSegmentsChange,
   onLock,
   onSaveScenario,
   onViewScenarios,
+  onStepClick,
 }: ProposalScreenProps) {
-  const [narrative, setNarrative] = useState(() => generateNarrative(state.segments));
-  const [tradeoff, setTradeoff] = useState(() => generateTradeoff(state.segments, prevSegments));
+  const narrative = useMemo(() => generateNarrative(state.segments), [state.segments]);
+  const tradeoff = useMemo(() => generateTradeoff(state.segments, prevSegments), [state.segments, prevSegments]);
   const audio = useAudio();
-
-  useEffect(() => {
-    setNarrative(generateNarrative(state.segments));
-    setTradeoff(generateTradeoff(state.segments, prevSegments));
-  }, [state.segments, prevSegments]);
 
   const handleSegmentsChange = (segments: Segment[]) => {
     onSegmentsChange(segments);
@@ -47,7 +48,6 @@ export function ProposalScreen({
     if (state.scenarios.length >= 1) {
       onViewScenarios();
     }
-    // Otherwise stays on proposal for another adjustment
   };
 
   return (
@@ -57,13 +57,18 @@ export function ProposalScreen({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
     >
-      <div className="screen-inner proposal-layout" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className="screen-inner proposal-layout">
+        {/* Progress stepper */}
+        <PlanningProgress
+          currentStep="allocate"
+          completedSteps={['context', 'themes']}
+          onStepClick={onStepClick}
+          quarter={state.nextQuarter}
+          stepLabel="Allocation"
+        />
+
         {/* Header */}
-        <div>
-          <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 600 }}>
-            {state.nextQuarter} Proposal
-          </p>
-        </div>
+        <p className="screen-section-label">{state.nextQuarter} Proposal</p>
 
         {/* Interactive bar */}
         <div>
@@ -74,9 +79,7 @@ export function ProposalScreen({
             showDeltas={true}
             prevSegments={prevSegments}
           />
-          <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 8, textAlign: 'center' }}>
-            — drag any boundary to adjust —
-          </p>
+          <p className="bar-hint-label">— drag any boundary to adjust —</p>
         </div>
 
         {/* Narrative sentence */}
@@ -84,13 +87,7 @@ export function ProposalScreen({
           key={narrative}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          style={{
-            fontSize: 18,
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            lineHeight: 1.4,
-            fontStyle: 'italic',
-          }}
+          className="proposal-narrative"
         >
           "{narrative}"
         </motion.p>
@@ -100,12 +97,7 @@ export function ProposalScreen({
           key={tradeoff}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          style={{
-            background: 'var(--warning-bg)',
-            borderRadius: 10,
-            padding: '14px 16px',
-            borderLeft: '3px solid var(--warning)',
-          }}
+          className="tradeoff-callout"
         >
           <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
             <span style={{ marginRight: 6 }}>⚠</span>
@@ -113,7 +105,10 @@ export function ProposalScreen({
           </p>
         </motion.div>
 
-        {/* Buttons */}
+        {/* Reasoning panel — expandable */}
+        <ReasoningPanel reasoning={reasoning} />
+
+        {/* Action buttons */}
         <div style={{ display: 'flex', gap: 12 }}>
           <motion.button
             className="btn-primary"

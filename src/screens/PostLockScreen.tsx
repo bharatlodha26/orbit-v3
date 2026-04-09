@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
-import type { Segment, ThinkingTrailEntry } from '../types';
-import { generateNarrative } from '../data/defaults';
+import type { Segment, ThinkingTrailEntry, ReasoningEntry } from '../types';
+import { generateNarrative, getNotList } from '../data/defaults';
 
 interface PostLockScreenProps {
   segments: Segment[];
   quarter: string;
   thinkingTrail: ThinkingTrailEntry[];
+  reasoning: ReasoningEntry[];
   onStakeholderLoop: () => void;
   onHome: () => void;
 }
@@ -17,8 +18,9 @@ interface ActionItem {
   primary?: boolean;
 }
 
-export function PostLockScreen({ segments, quarter, thinkingTrail, onStakeholderLoop, onHome }: PostLockScreenProps) {
+export function PostLockScreen({ segments, quarter, thinkingTrail, reasoning, onStakeholderLoop, onHome }: PostLockScreenProps) {
   const narrative = generateNarrative(segments);
+  const notList = getNotList(segments);
 
   const handleShare = async () => {
     const text = `${quarter} Allocation: ${segments.map(s => `${s.name} ${s.percentage}%`).join(' · ')}\n"${narrative}"`;
@@ -41,17 +43,25 @@ export function PostLockScreen({ segments, quarter, thinkingTrail, onStakeholder
         percentage: s.percentage,
         isLocked: s.isLocked ?? false,
       })),
-      notThisQuarter: [],
-      thinkingTrail: thinkingTrail.map(t => ({
-        question: t.question,
-        answer: t.answerText,
+      notThisQuarter: notList,
+      reasoning: reasoning.map(entry => ({
+        theme: entry.themeName,
+        evidence: entry.bullets.map(b => ({
+          text: b.text,
+          signalType: b.signalType,
+          sourceQuote: b.sourceQuote,
+        })),
       })),
+      decisionTrail: {
+        conversationTurns: thinkingTrail.length,
+        qa: thinkingTrail.map(t => ({ question: t.question, answer: t.answerText })),
+      },
     };
     const blob = new Blob([JSON.stringify(artifact, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${quarter.replace(/\s/g, '-').toLowerCase()}-allocation.json`;
+    a.download = `${quarter.replace(/\s/g, '-').toLowerCase()}-quarterly-bet.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -65,7 +75,7 @@ export function PostLockScreen({ segments, quarter, thinkingTrail, onStakeholder
     { label: 'Share as link', icon: '↗', onClick: handleShare, primary: true },
     { label: 'Download one-pager', icon: '↓', onClick: handleDownload },
     { label: 'View thinking trail', icon: '⌛', onClick: handleViewTrail },
-    { label: 'Start initiative scoring →', icon: '⬡', onClick: onHome },
+    { label: 'Next: Score initiatives within each theme →', icon: '⬡', onClick: onHome },
   ];
 
   return (
@@ -75,32 +85,20 @@ export function PostLockScreen({ segments, quarter, thinkingTrail, onStakeholder
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
     >
-      <div className="screen-inner" style={{ display: 'flex', flexDirection: 'column', gap: 24, alignItems: 'center' }}>
+      <div className="screen-inner post-lock-layout">
         {/* Confirmation mark */}
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            background: 'var(--accent)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 26,
-            color: 'white',
-          }}
+          className="post-lock-check"
         >
           ✓
         </motion.div>
 
         <div style={{ textAlign: 'center' }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
-            {quarter} Locked
-          </h2>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+          <h2 className="post-lock-title">✓ {quarter} Locked</h2>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', fontStyle: 'italic', marginTop: 4 }}>
             "{narrative}"
           </p>
         </div>

@@ -10,7 +10,7 @@ export type SignalType =
 export interface Segment {
   id: string;
   name: string;          // outcome-oriented, e.g. "Win larger deals"
-  shortName: string;     // max 3 words for narrow segments
+  shortName?: string;    // max 3 words for narrow segments; falls back to name.slice(0,3)
   percentage: number;
   color: string;
   isLocked?: boolean;    // legacy alias
@@ -60,7 +60,7 @@ export type PlanningStep = 'context' | 'themes' | 'allocate' | 'review' | 'lock'
 
 export interface AppState {
   currentScreen: Screen;
-  planningStep: PlanningStep;
+  planningStep?: PlanningStep;
   currentQuarter: string;
   nextQuarter: string;
   weeksLeft: number;
@@ -72,7 +72,8 @@ export interface AppState {
   lockedSegments: Segment[] | null;
   conversationTurn: number;
   isFirstTime: boolean;
-  reasoning: ReasoningEntry[];
+  reasoning?: ReasoningEntry[];
+  completedSteps?: PlanningStep[];
 }
 
 export interface ConversationTurn {
