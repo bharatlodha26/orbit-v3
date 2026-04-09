@@ -139,7 +139,7 @@ export function AllocationBar({
               maxWidth: '100%',
               letterSpacing: 0.2,
             }}>
-              {seg.percentage >= 10 ? seg.name : seg.name.slice(0, 3)}
+              {seg.percentage >= 10 ? seg.name : (seg.shortName ?? seg.name.slice(0, 3))}
             </span>
             {/* Percentage */}
             {!compact && (

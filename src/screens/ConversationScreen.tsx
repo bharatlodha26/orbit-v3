@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AllocationBar } from '../components/AllocationBar';
 import { PlanningProgress } from '../components/PlanningProgress';
@@ -19,14 +19,34 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
   const [inputText, setInputText] = useState('');
   const [questionKey, setQuestionKey] = useState(0);
   const [trail, setTrail] = useState<ThinkingTrailEntry[]>([]);
+  const [accReasoning, setAccReasoning] = useState<ReasoningEntry[]>([]);
+  const [history, setHistory] = useState<ConversationHistory[]>([]);
+  const [currentTurnData, setCurrentTurnData] = useState<GeneratedTurn | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const audio = useAudio();
   const haptic = useHaptic();
 
-  const turns = getConversationTurns(state.segments);
-  const currentTurn = turns[turn];
+  // Load first turn on mount
+  useEffect(() => {
+    loadTurn(0, [], state.segments);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const submitAnswer = (answer: string) => {
-    if (!answer.trim()) return;
+  const loadTurn = useCallback(async (
+    turnIndex: number,
+    hist: ConversationHistory[],
+    segments: AppState['segments'],
+  ) => {
+    setIsLoading(true);
+    const turnData = await generateNextTurn(turnIndex, hist, segments);
+    setCurrentTurnData(turnData);
+    setIsLoading(false);
+  }, []);
+
+  const submitAnswer = useCallback(async (answer: string) => {
+    if (!answer.trim() || !currentTurnData) return;
+
     haptic.tap();
     audio.playChipSelect(); // light 'tick' for chip selections / confirmations
 
@@ -35,27 +55,38 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
 
     const entry: ThinkingTrailEntry = {
       timestamp: Date.now(),
-      question: currentTurn.question,
+      question: currentTurnData.question,
       answerText: answer,
       barStateSnapshot: newSegments,
+      reasoning: newReasoning,
     };
     const newTrail = [...trail, entry];
     setTrail(newTrail);
+
+    const newHistory: ConversationHistory[] = [
+      ...history,
+      { question: currentTurnData.question, answer },
+    ];
+    setHistory(newHistory);
     setInputText('');
 
     const nextTurn = turn + 1;
-    if (nextTurn >= turns.length) {
+
+    if (nextTurn >= TOTAL_TURNS) {
       setTimeout(() => {
         audio.playTransition(); // rising notes = progress
         onComplete(newTrail);
       }, 400);
-    } else {
-      setTimeout(() => {
-        setTurn(nextTurn);
-        setQuestionKey(k => k + 1);
-      }, 350);
+      return;
     }
-  };
+
+    // Animate question out, then load next turn
+    setTimeout(async () => {
+      setTurn(nextTurn);
+      setQuestionKey(k => k + 1);
+      await loadTurn(nextTurn, newHistory, newSegments);
+    }, 350);
+  }, [currentTurnData, state.segments, onSegmentsChange, accReasoning, trail, history, turn, audio, haptic, loadTurn, onComplete]);
 
   const handleChip = (chip: string) => submitAnswer(chip);
   const handleSubmit = () => submitAnswer(inputText);
@@ -169,4 +200,18 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
       </div>
     </motion.div>
   );
+}
+
+// Merge new reasoning entries into accumulated reasoning
+function mergeReasoning(acc: ReasoningEntry[], incoming: ReasoningEntry[]): ReasoningEntry[] {
+  const result = [...acc];
+  incoming.forEach(entry => {
+    const existing = result.find(r => r.themeId === entry.themeId);
+    if (existing) {
+      existing.bullets = [...existing.bullets, ...entry.bullets];
+    } else {
+      result.push({ ...entry });
+    }
+  });
+  return result;
 }
