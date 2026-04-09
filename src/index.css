@@ -1,0 +1,302 @@
+/* ─── Design tokens ───────────────────────────────────────── */
+:root {
+  --text-primary:    #0f0f12;
+  --text-secondary:  #4b4d58;
+  --text-tertiary:   #9ca3af;
+  --bg:              #f0f2f6;
+  --surface:         #ffffff;
+  --surface-secondary: #e8eaf0;
+  --border:          #dde0ea;
+  --accent:          #4A6CF7;
+  --accent-soft:     rgba(74,108,247,0.07);
+  --warning:         #F59E0B;
+  --warning-bg:      rgba(245,158,11,0.08);
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  font-family: var(--sans);
+  font-size: 16px;
+  color: var(--text-primary);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-primary:    #f0f1f5;
+    --text-secondary:  #9ca3af;
+    --text-tertiary:   #6b7280;
+    --bg:              #0d0e12;
+    --surface:         #17181e;
+    --surface-secondary: #1e2028;
+    --border:          #2a2c35;
+    --accent:          #6b8aff;
+    --accent-soft:     rgba(107,138,255,0.1);
+    --warning:         #fbbf24;
+    --warning-bg:      rgba(251,191,36,0.1);
+  }
+}
+
+/* ─── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+body { overflow-x: hidden; }
+button { font-family: inherit; cursor: pointer; border: none; outline: none; background: none; }
+input  { font-family: inherit; }
+h1,h2,h3,h4 { font-weight: 700; }
+
+/* ─── Root / shell ───────────────────────────────────────── */
+#root {
+  width: 100%;
+  min-height: 100svh;
+  display: flex;
+  background: var(--bg);
+}
+
+/* Full-viewport shell — desktop primary */
+.app-shell {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 100svh;
+}
+
+/* ─── Screen wrapper ─────────────────────────────────────── */
+.screen {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Default (mobile) inner padding */
+.screen-inner {
+  padding: 40px 24px 48px;
+  min-height: 100svh;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* Desktop: more breathing room, centered content */
+@media (min-width: 768px) {
+  .screen-inner {
+    padding: 56px 48px 64px;
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .screen-inner {
+    padding: 72px 0 80px;
+    max-width: 680px;
+  }
+}
+
+/* ─── Buttons ────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 32px;
+  background: var(--accent);
+  color: white;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.btn-primary:hover  { opacity: 0.92; }
+.btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+
+.btn-primary.btn-large {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  border-radius: 14px;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+.btn-secondary:hover  { background: var(--surface-secondary); }
+.btn-secondary:active { background: var(--border); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.btn-ghost:hover { background: var(--surface-secondary); }
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: var(--accent);
+  color: white;
+  border-radius: 10px;
+  font-size: 16px;
+  transition: opacity 0.15s;
+}
+.btn-icon:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.btn-pick {
+  padding: 8px 20px;
+  background: var(--accent);
+  color: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.btn-pick:hover  { opacity: 0.9; }
+.btn-pick:active { opacity: 0.8; }
+
+/* Action list (post-lock) */
+.btn-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+  transition: background 0.15s;
+}
+.btn-action:hover  { background: var(--surface-secondary); }
+.btn-action-primary {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ─── Chips ──────────────────────────────────────────────── */
+.chip {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 13px 18px;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.chip:hover  { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.chip:active { background: var(--accent-soft); border-color: var(--accent); }
+
+/* ─── Home screen layout ─────────────────────────────────── */
+.home-layout {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 28px;
+  min-height: 100svh;
+}
+
+.home-quarter-label {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+/* Bar wrapper: make the bar visually dominant */
+.home-bar-wrapper {
+  width: 100%;
+}
+
+.home-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* On desktop the bar is taller for more visual weight */
+@media (min-width: 768px) {
+  .home-bar-wrapper .allocation-bar {
+    height: 96px !important;
+  }
+  .home-layout {
+    gap: 36px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .home-bar-wrapper .allocation-bar {
+    height: 112px !important;
+  }
+}
+
+/* ─── Conversation layout ────────────────────────────────── */
+@media (min-width: 768px) {
+  .conversation-layout {
+    gap: 32px !important;
+  }
+  .conversation-layout .allocation-bar {
+    height: 80px !important;
+  }
+}
+
+/* ─── Proposal layout ────────────────────────────────────── */
+@media (min-width: 768px) {
+  .proposal-layout {
+    gap: 32px !important;
+  }
+  .proposal-layout .allocation-bar {
+    height: 88px !important;
+  }
+}
+
+/* ─── Text input ─────────────────────────────────────────── */
+.text-input {
+  flex: 1;
+  height: 44px;
+  padding: 0 16px;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+.text-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.text-input::placeholder { color: var(--text-tertiary); }
