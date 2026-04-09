@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import type { AppState, Scenario, Screen, Segment, ThinkingTrailEntry, ReasoningEntry, PlanningStep } from './types';
+import type { AppState, Scenario, Screen, Segment, ThinkingTrailEntry, PlanningStep, ReasoningEntry } from './types';
+
 import { Q2_SEGMENTS } from './data/defaults';
 import { AppHeader } from './components/AppHeader';
 import { HomeScreen } from './screens/HomeScreen';
@@ -28,21 +29,20 @@ const INITIAL_STATE: AppState = {
   completedSteps: [],
 };
 
-// Derive header context string from current screen
+// Short context labels — avoid long text that stretches the breadcrumb
 function getHeaderContext(screen: Screen, nextQuarter: string): string {
   switch (screen) {
     case 'home':         return 'Dashboard';
-    case 'conversation': return `${nextQuarter} Planning · Theme Selection & Allocation`;
-    case 'proposal':     return `${nextQuarter} Planning · Theme Selection & Allocation`;
-    case 'scenarios':    return `${nextQuarter} Planning · Scenario Comparison`;
-    case 'stakeholder':  return `${nextQuarter} Planning · Stakeholder Review`;
-    case 'lock':         return `${nextQuarter} Planning · Lock Allocation`;
-    case 'post-lock':    return `${nextQuarter} Locked`;
+    case 'conversation': return `${nextQuarter} Planning`;
+    case 'proposal':     return `${nextQuarter} Planning`;
+    case 'scenarios':    return `${nextQuarter} Scenarios`;
+    case 'stakeholder':  return `${nextQuarter} Planning`;
+    case 'lock':         return `${nextQuarter} Lock`;
+    case 'post-lock':    return `${nextQuarter} Locked ✓`;
     default:             return 'Compass';
   }
 }
 
-// Map planning step to the screen we should navigate to
 function stepToScreen(step: PlanningStep): Screen {
   switch (step) {
     case 'context':
@@ -69,13 +69,12 @@ export default function App() {
     go('conversation');
   };
 
-  const handleConversationComplete = (trail: ThinkingTrailEntry[], newReasoning: ReasoningEntry[]) => {
+  const handleConversationComplete = (trail: ThinkingTrailEntry[]) => {
     setState(s => ({
       ...s,
       thinkingTrail: trail,
       completedSteps: ['context', 'themes'],
     }));
-    setReasoning(newReasoning);
     go('proposal');
   };
 
@@ -119,8 +118,7 @@ export default function App() {
   };
 
   const handleStepClick = (step: PlanningStep) => {
-    const completedSteps = state.completedSteps ?? [];
-    if (completedSteps.includes(step)) {
+    if (state.completedSteps.includes(step)) {
       go(stepToScreen(step));
     }
   };

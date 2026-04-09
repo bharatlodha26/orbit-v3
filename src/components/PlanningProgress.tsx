@@ -14,7 +14,6 @@ interface PlanningProgressProps {
   completedSteps: PlanningStep[];
   onStepClick: (step: PlanningStep) => void;
   quarter: string;
-  stepLabel: string;
 }
 
 export function PlanningProgress({
@@ -22,13 +21,17 @@ export function PlanningProgress({
   completedSteps,
   onStepClick,
   quarter,
-  stepLabel,
 }: PlanningProgressProps) {
   const currentIdx = STEPS.findIndex(s => s.id === currentStep);
 
   return (
     <div className="planning-progress">
-      {/* Stepper */}
+      {/* Breadcrumb label — fixed width, never changes */}
+      <p className="planning-progress-breadcrumb">
+        {quarter} Planning
+      </p>
+
+      {/* Step dots + connectors */}
       <div className="planning-progress-steps" role="list">
         {STEPS.map((step, i) => {
           const isCompleted = completedSteps.includes(step.id);
@@ -67,11 +70,6 @@ export function PlanningProgress({
           );
         })}
       </div>
-
-      {/* Breadcrumb */}
-      <p className="planning-progress-breadcrumb">
-        {quarter} Planning · {stepLabel}
-      </p>
     </div>
   );
 }

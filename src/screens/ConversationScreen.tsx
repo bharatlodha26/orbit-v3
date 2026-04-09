@@ -1,27 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AllocationBar } from '../components/AllocationBar';
-import { VerticalAllocationBar } from '../components/VerticalAllocationBar';
 import { PlanningProgress } from '../components/PlanningProgress';
-import type { AppState, ThinkingTrailEntry, ReasoningEntry, PlanningStep } from '../types';
-import { generateNextTurn, TOTAL_TURNS } from '../services/mockApi';
-import type { GeneratedTurn, ConversationHistory } from '../services/mockApi';
+import type { AppState, ThinkingTrailEntry, PlanningStep } from '../types';
+import { getConversationTurns } from '../data/defaults';
 import { useAudio } from '../hooks/useAudio';
 import { useHaptic } from '../hooks/useHaptic';
 
 interface ConversationScreenProps {
   state: AppState;
   onSegmentsChange: (segments: AppState['segments']) => void;
-  onComplete: (trail: ThinkingTrailEntry[], reasoning: ReasoningEntry[]) => void;
+  onComplete: (trail: ThinkingTrailEntry[]) => void;
   onStepClick: (step: PlanningStep) => void;
 }
-
-const STEP_LABELS: Record<number, string> = {
-  0: 'Theme Selection',
-  1: 'Theme Selection',
-  2: 'Theme Selection',
-  3: 'Theme Selection',
-};
 
 export function ConversationScreen({ state, onSegmentsChange, onComplete, onStepClick }: ConversationScreenProps) {
   const [turn, setTurn] = useState(0);
@@ -57,20 +48,11 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
     if (!answer.trim() || !currentTurnData) return;
 
     haptic.tap();
-    audio.playChipSelect();
+    audio.playChipSelect(); // light 'tick' for chip selections / confirmations
 
-    // Update bar via turn's barUpdateFn
-    const newSegments = currentTurnData.barUpdateFn(state.segments, answer);
+    const newSegments = currentTurn.barUpdateFn(state.segments, answer);
     onSegmentsChange(newSegments);
 
-    // Generate reasoning for this answer
-    const newReasoning = currentTurnData.generateReasoning(answer, newSegments);
-
-    // Merge reasoning entries
-    const merged = mergeReasoning(accReasoning, newReasoning);
-    setAccReasoning(merged);
-
-    // Record trail entry
     const entry: ThinkingTrailEntry = {
       timestamp: Date.now(),
       question: currentTurnData.question,
@@ -92,8 +74,8 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
 
     if (nextTurn >= TOTAL_TURNS) {
       setTimeout(() => {
-        audio.playTransition();
-        onComplete(newTrail, merged);
+        audio.playTransition(); // rising notes = progress
+        onComplete(newTrail);
       }, 400);
       return;
     }
@@ -112,8 +94,6 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
   const currentStep: PlanningStep = turn <= 1 ? 'context' : 'themes';
   const completedSteps: PlanningStep[] = turn > 1 ? ['context'] : [];
 
-  const stepLabel = STEP_LABELS[turn] ?? 'Theme Selection';
-
   return (
     <motion.div
       className="screen"
@@ -121,137 +101,101 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <div className="screen-inner conversation-screen-inner">
+      <div className="screen-inner" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {/* Progress stepper */}
         <PlanningProgress
           currentStep={currentStep}
           completedSteps={completedSteps}
           onStepClick={onStepClick}
           quarter={state.nextQuarter}
-          stepLabel={stepLabel}
         />
 
-        {/* Desktop 2-column layout */}
-        <div className="conversation-columns">
+        {/* Bar at top */}
+        <div>
+          <AllocationBar segments={state.segments} />
+          <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, textAlign: 'center' }}>
+            — {state.currentQuarter} (current) —
+          </p>
+        </div>
 
-          {/* LEFT: question + chips + input */}
-          <div className="conversation-left">
+        {/* Progress dots */}
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+          {turns.map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: 6, height: 6, borderRadius: '50%',
+                backgroundColor: i <= turn ? 'var(--accent)' : 'var(--border)',
+                transition: 'background-color 0.3s',
+              }}
+            />
+          ))}
+        </div>
 
-            {/* Progress dots (mobile only — stepper is shown on desktop) */}
-            <div className="conversation-dots mobile-only">
-              {Array.from({ length: TOTAL_TURNS }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: 6, height: 6, borderRadius: '50%',
-                    backgroundColor: i <= turn ? 'var(--accent)' : 'var(--border)',
-                    transition: 'background-color 0.3s',
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Mobile bar (shown only on mobile, above the question) */}
-            <div className="conversation-bar-mobile">
-              <AllocationBar segments={state.segments} />
-              <p className="conversation-bar-label">
-                — {state.currentQuarter} (current) —
-              </p>
-            </div>
-
-            {/* Question card */}
-            <AnimatePresence mode="wait">
-              {isLoading ? (
-                <motion.div
-                  key={`loading-${turn}`}
-                  className="conversation-question-card"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <div className="conversation-loading">
-                    <motion.span
-                      animate={{ opacity: [0.3, 1, 0.3] }}
-                      transition={{ repeat: Infinity, duration: 1.2 }}
-                      style={{ fontSize: 14, color: 'var(--text-tertiary)' }}
-                    >
-                      Analyzing your answer…
-                    </motion.span>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key={questionKey}
-                  className="conversation-question-card"
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -16 }}
-                  transition={{ duration: 0.22 }}
-                >
-                  <p className="conversation-question-text">
-                    {currentTurnData?.question}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Suggestion chips */}
-            <AnimatePresence mode="wait">
-              {!isLoading && currentTurnData && (
-                <motion.div
-                  key={`chips-${questionKey}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
-                >
-                  {currentTurnData.chips.map((chip, i) => (
-                    <motion.button
-                      key={chip}
-                      className="chip"
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.06 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => handleChip(chip)}
-                    >
-                      {chip}
-                    </motion.button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Text input */}
-            {!isLoading && (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input
-                  className="text-input"
-                  placeholder="Or describe in your own words…"
-                  value={inputText}
-                  onChange={e => setInputText(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                />
-                <motion.button
-                  className="btn-icon"
-                  whileTap={{ scale: 0.9 }}
-                  onClick={handleSubmit}
-                  disabled={!inputText.trim()}
-                >
-                  ➤
-                </motion.button>
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT: Vertical bar (desktop only) */}
-          <div className="conversation-right desktop-only">
-            <p className="conversation-bar-label" style={{ textAlign: 'center', marginBottom: 12 }}>
-              {state.nextQuarter} — taking shape
+        {/* Question */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={questionKey}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              background: 'var(--surface)',
+              borderRadius: 12,
+              padding: '20px',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <p style={{ fontSize: 17, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4 }}>
+              {currentTurn.question}
             </p>
-            <VerticalAllocationBar segments={state.segments} height={360} />
-          </div>
+          </motion.div>
+        </AnimatePresence>
 
+        {/* Suggestion chips */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`chips-${questionKey}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+          >
+            {currentTurn.chips.map((chip, i) => (
+              <motion.button
+                key={chip}
+                className="chip"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => handleChip(chip)}
+              >
+                {chip}
+              </motion.button>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Text input */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            className="text-input"
+            placeholder="Or type your own..."
+            value={inputText}
+            onChange={e => setInputText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+          />
+          <motion.button
+            className="btn-icon"
+            whileTap={{ scale: 0.9 }}
+            onClick={() => { audio.playChipSelect(); handleSubmit(); }}
+            disabled={!inputText.trim()}
+          >
+            ➤
+          </motion.button>
         </div>
       </div>
     </motion.div>

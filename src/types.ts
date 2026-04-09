@@ -9,18 +9,18 @@ export type SignalType =
 
 export interface Segment {
   id: string;
-  name: string;          // outcome-oriented, e.g. "Win larger deals"
-  shortName?: string;    // max 3 words for narrow segments; falls back to name.slice(0,3)
+  name: string;
+  shortName?: string;
   percentage: number;
   color: string;
-  isLocked?: boolean;    // legacy alias
+  isLocked?: boolean;
   isConstraint?: boolean;
   sourceQuotes?: string[];
   signalType?: SignalType;
 }
 
 export interface ReasoningBullet {
-  text: string;          // max 8 words
+  text: string;
   signalType: SignalType;
   sourceQuote?: string;
 }
@@ -73,7 +73,7 @@ export interface AppState {
   conversationTurn: number;
   isFirstTime: boolean;
   reasoning?: ReasoningEntry[];
-  completedSteps?: PlanningStep[];
+  completedSteps: PlanningStep[];
 }
 
 export interface ConversationTurn {
