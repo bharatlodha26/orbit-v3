@@ -9,18 +9,18 @@ export type SignalType =
 
 export interface Segment {
   id: string;
-  name: string;          // outcome-oriented, e.g. "Win larger deals"
-  shortName: string;     // max 3 words for narrow segments
+  name: string;
+  shortName?: string;
   percentage: number;
   color: string;
-  isLocked?: boolean;    // legacy alias
+  isLocked?: boolean;
   isConstraint?: boolean;
   sourceQuotes?: string[];
   signalType?: SignalType;
 }
 
 export interface ReasoningBullet {
-  text: string;          // max 8 words
+  text: string;
   signalType: SignalType;
   sourceQuote?: string;
 }
@@ -60,7 +60,7 @@ export type PlanningStep = 'context' | 'themes' | 'allocate' | 'review' | 'lock'
 
 export interface AppState {
   currentScreen: Screen;
-  planningStep: PlanningStep;
+  planningStep?: PlanningStep;
   currentQuarter: string;
   nextQuarter: string;
   weeksLeft: number;
@@ -72,7 +72,8 @@ export interface AppState {
   lockedSegments: Segment[] | null;
   conversationTurn: number;
   isFirstTime: boolean;
-  reasoning: ReasoningEntry[];
+  reasoning?: ReasoningEntry[];
+  completedSteps: PlanningStep[];
 }
 
 export interface ConversationTurn {

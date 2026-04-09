@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import type { AppState, Scenario, Screen, Segment, ThinkingTrailEntry } from './types';
+import type { AppState, Scenario, Screen, Segment, ThinkingTrailEntry, PlanningStep, ReasoningEntry } from './types';
 import { Q2_SEGMENTS } from './data/defaults';
+import { AppHeader } from './components/AppHeader';
 import { HomeScreen } from './screens/HomeScreen';
 import { ConversationScreen } from './screens/ConversationScreen';
 import { ProposalScreen } from './screens/ProposalScreen';
@@ -24,12 +25,38 @@ const INITIAL_STATE: AppState = {
   lockedSegments: null,
   conversationTurn: 0,
   isFirstTime: false,
+  completedSteps: [],
 };
+
+// Short context labels — avoid long text that stretches the breadcrumb
+function getHeaderContext(screen: Screen, nextQuarter: string): string {
+  switch (screen) {
+    case 'home':         return 'Dashboard';
+    case 'conversation': return `${nextQuarter} Planning`;
+    case 'proposal':     return `${nextQuarter} Planning`;
+    case 'scenarios':    return `${nextQuarter} Scenarios`;
+    case 'stakeholder':  return `${nextQuarter} Planning`;
+    case 'lock':         return `${nextQuarter} Lock`;
+    case 'post-lock':    return `${nextQuarter} Locked ✓`;
+    default:             return 'Compass';
+  }
+}
+
+function stepToScreen(step: PlanningStep): Screen {
+  switch (step) {
+    case 'context':
+    case 'themes':   return 'conversation';
+    case 'allocate': return 'proposal';
+    case 'review':   return 'stakeholder';
+    case 'lock':     return 'lock';
+  }
+}
 
 export default function App() {
   const [state, setState] = useState<AppState>(INITIAL_STATE);
   const [workingSegments, setWorkingSegments] = useState<Segment[]>([...Q2_SEGMENTS]);
   const [prevSegments] = useState<Segment[]>([...Q2_SEGMENTS]);
+  const [reasoning, setReasoning] = useState<ReasoningEntry[]>([]);
 
   const go = useCallback((screen: Screen) => {
     setState(s => ({ ...s, currentScreen: screen }));
@@ -37,11 +64,16 @@ export default function App() {
 
   const handlePlanStart = () => {
     setWorkingSegments([...state.segments]);
+    setReasoning([]);
     go('conversation');
   };
 
   const handleConversationComplete = (trail: ThinkingTrailEntry[]) => {
-    setState(s => ({ ...s, thinkingTrail: trail }));
+    setState(s => ({
+      ...s,
+      thinkingTrail: trail,
+      completedSteps: ['context', 'themes'],
+    }));
     go('proposal');
   };
 
@@ -58,86 +90,110 @@ export default function App() {
     go('proposal');
   };
 
-  const handleLock = () => go('lock');
+  const handleLock = () => {
+    setState(s => ({ ...s, completedSteps: ['context', 'themes', 'allocate'] }));
+    go('lock');
+  };
 
   const handleLocked = () => {
     setState(s => ({
       ...s,
       lockedSegments: [...workingSegments],
       segments: [...workingSegments],
+      completedSteps: ['context', 'themes', 'allocate', 'review', 'lock'],
     }));
     go('post-lock');
   };
 
-  const handleStakeholderResolved = () => go('proposal');
+  const handleStakeholderResolved = () => {
+    setState(s => ({ ...s, completedSteps: ['context', 'themes', 'allocate', 'review'] }));
+    go('proposal');
+  };
 
   const handleHome = () => {
-    setState(s => ({ ...s, scenarios: [] }));
+    setState(s => ({ ...s, scenarios: [], completedSteps: [] }));
+    setReasoning([]);
     go('home');
   };
 
+  const handleStepClick = (step: PlanningStep) => {
+    if (state.completedSteps.includes(step)) {
+      go(stepToScreen(step));
+    }
+  };
+
   const currentScreen = state.currentScreen;
+  const headerContext = getHeaderContext(currentScreen, state.nextQuarter);
 
   return (
     <div className="app-shell">
-      <AnimatePresence mode="wait">
-        {currentScreen === 'home' && (
-          <HomeScreen key="home" state={state} onPlan={handlePlanStart} />
-        )}
-        {currentScreen === 'conversation' && (
-          <ConversationScreen
-            key="conversation"
-            state={{ ...state, segments: workingSegments }}
-            onSegmentsChange={handleWorkingSegmentsChange}
-            onComplete={handleConversationComplete}
-          />
-        )}
-        {currentScreen === 'proposal' && (
-          <ProposalScreen
-            key="proposal"
-            state={{ ...state, segments: workingSegments }}
-            prevSegments={prevSegments}
-            onSegmentsChange={handleWorkingSegmentsChange}
-            onLock={handleLock}
-            onSaveScenario={handleSaveScenario}
-            onViewScenarios={() => go('scenarios')}
-          />
-        )}
-        {currentScreen === 'scenarios' && (
-          <ScenarioComparison
-            key="scenarios"
-            scenarios={state.scenarios}
-            onPick={handlePickScenario}
-            onBack={() => go('proposal')}
-          />
-        )}
-        {currentScreen === 'stakeholder' && (
-          <StakeholderScreen
-            key="stakeholder"
-            state={{ ...state, segments: workingSegments }}
-            onSegmentsChange={handleWorkingSegmentsChange}
-            onResolved={handleStakeholderResolved}
-          />
-        )}
-        {currentScreen === 'lock' && (
-          <LockScreen
-            key="lock"
-            segments={workingSegments}
-            quarter={state.nextQuarter}
-            onLocked={handleLocked}
-          />
-        )}
-        {currentScreen === 'post-lock' && (
-          <PostLockScreen
-            key="post-lock"
-            segments={workingSegments}
-            quarter={state.nextQuarter}
-            thinkingTrail={state.thinkingTrail}
-            onStakeholderLoop={() => go('stakeholder')}
-            onHome={handleHome}
-          />
-        )}
-      </AnimatePresence>
+      <AppHeader context={headerContext} onHome={handleHome} />
+      <div className="app-content">
+        <AnimatePresence mode="wait">
+          {currentScreen === 'home' && (
+            <HomeScreen key="home" state={state} onPlan={handlePlanStart} />
+          )}
+          {currentScreen === 'conversation' && (
+            <ConversationScreen
+              key="conversation"
+              state={{ ...state, segments: workingSegments }}
+              onSegmentsChange={handleWorkingSegmentsChange}
+              onComplete={handleConversationComplete}
+              onStepClick={handleStepClick}
+            />
+          )}
+          {currentScreen === 'proposal' && (
+            <ProposalScreen
+              key="proposal"
+              state={{ ...state, segments: workingSegments }}
+              prevSegments={prevSegments}
+              reasoning={reasoning}
+              onSegmentsChange={handleWorkingSegmentsChange}
+              onLock={handleLock}
+              onSaveScenario={handleSaveScenario}
+              onViewScenarios={() => go('scenarios')}
+              onStepClick={handleStepClick}
+            />
+          )}
+          {currentScreen === 'scenarios' && (
+            <ScenarioComparison
+              key="scenarios"
+              scenarios={state.scenarios}
+              onPick={handlePickScenario}
+              onBack={() => go('proposal')}
+            />
+          )}
+          {currentScreen === 'stakeholder' && (
+            <StakeholderScreen
+              key="stakeholder"
+              state={{ ...state, segments: workingSegments }}
+              onSegmentsChange={handleWorkingSegmentsChange}
+              onResolved={handleStakeholderResolved}
+            />
+          )}
+          {currentScreen === 'lock' && (
+            <LockScreen
+              key="lock"
+              segments={workingSegments}
+              quarter={state.nextQuarter}
+              reasoning={reasoning}
+              onLocked={handleLocked}
+              onStepClick={handleStepClick}
+            />
+          )}
+          {currentScreen === 'post-lock' && (
+            <PostLockScreen
+              key="post-lock"
+              segments={workingSegments}
+              quarter={state.nextQuarter}
+              thinkingTrail={state.thinkingTrail}
+              reasoning={reasoning}
+              onStakeholderLoop={() => go('stakeholder')}
+              onHome={handleHome}
+            />
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
