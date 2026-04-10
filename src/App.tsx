@@ -45,20 +45,20 @@ type ThemeMode = 'light' | 'dark';
 function getHeaderContext(screen: Screen, nextQuarter: string): string {
   switch (screen) {
     case 'home':               return 'Dashboard';
-    case 'quarter-brief':      return `${nextQuarter} Planning`;
-    case 'conversation':       return `${nextQuarter} Planning`;
-    case 'proposal':           return `${nextQuarter} Planning`;
-    case 'scenarios':          return `${nextQuarter} Scenarios`;
-    case 'stakeholder':        return `${nextQuarter} Planning`;
-    case 'lock':               return `${nextQuarter} Lock`;
-    case 'post-lock':          return `${nextQuarter} Locked ✓`;
-    case 'theme-landing':      return `${nextQuarter} Scoring`;
-    case 'scoring-model':      return `${nextQuarter} Scoring Model`;
-    case 'initiative-scoring': return `${nextQuarter} Initiative Scoring`;
-    case 'ranked-review':      return `${nextQuarter} Ranked Review`;
-    case 'share-export':       return `${nextQuarter} Export`;
-    case 'plan-canvas':        return `${nextQuarter} Plan`;
-    case 'plan-viewer':        return `${nextQuarter} Audience Views`;
+    case 'quarter-brief':      return `${nextQuarter} · Planning overview`;
+    case 'conversation':       return `${nextQuarter} · Set strategic context`;
+    case 'proposal':           return `${nextQuarter} · Review allocation`;
+    case 'scenarios':          return `${nextQuarter} · Scenario comparison`;
+    case 'stakeholder':        return `${nextQuarter} · Stakeholder pressure-test`;
+    case 'lock':               return `${nextQuarter} · Lock allocation`;
+    case 'post-lock':          return `${nextQuarter} · Allocation locked ✓`;
+    case 'theme-landing':      return `${nextQuarter} · Score initiatives`;
+    case 'scoring-model':      return `${nextQuarter} · Build scoring model`;
+    case 'initiative-scoring': return `${nextQuarter} · Score initiatives`;
+    case 'ranked-review':      return `${nextQuarter} · Review ranked list`;
+    case 'share-export':       return `${nextQuarter} · Export & share`;
+    case 'plan-canvas':        return `${nextQuarter} · Build plan`;
+    case 'plan-viewer':        return `${nextQuarter} · Audience views`;
     default:                   return 'Compass';
   }
 }

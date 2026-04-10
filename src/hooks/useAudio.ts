@@ -34,11 +34,41 @@ export function useAudio() {
     }
   }, [getCtx]);
 
-  // Segment grow = higher pitch, shrink = lower pitch
-  const playSegmentChange = useCallback((percentage: number, growing: boolean) => {
-    const baseFreq = 200 + (percentage / 100) * 400;
-    playTone(growing ? baseFreq * 1.05 : baseFreq * 0.95, 0.12, 'sine', 0.06);
-  }, [playTone]);
+  // Soft tick — neutral detent click, no pitch variation
+  const playSegmentChange = useCallback((_percentage: number, _growing: boolean) => {
+    try {
+      const ctx = getCtx();
+      const duration = 0.04;
+      const bufferSize = Math.floor(ctx.sampleRate * duration);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      // Short noise burst shaped with a very fast decay — feels like a soft click
+      for (let i = 0; i < bufferSize; i++) {
+        const t = i / bufferSize;
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 28);
+      }
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+
+      // High-pass to remove rumble, keep only the crisp tick transient
+      const hpf = ctx.createBiquadFilter();
+      hpf.type = 'highpass';
+      hpf.frequency.value = 1800;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+      source.connect(hpf);
+      hpf.connect(gain);
+      gain.connect(ctx.destination);
+      source.start();
+    } catch {
+      // Audio not supported
+    }
+  }, [getCtx]);
 
   // Click/lock sound — wooden block feel
   const playLockClick = useCallback(() => {

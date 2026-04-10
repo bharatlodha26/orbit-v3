@@ -2,11 +2,11 @@ import { motion } from 'framer-motion';
 import type { PlanningStep } from '../types';
 
 const STEPS: { id: PlanningStep; label: string }[] = [
-  { id: 'context',  label: 'Context'  },
-  { id: 'themes',   label: 'Themes'   },
-  { id: 'allocate', label: 'Allocate' },
-  { id: 'review',   label: 'Review'   },
-  { id: 'lock',     label: 'Lock'     },
+  { id: 'context',  label: 'Context'    },
+  { id: 'themes',   label: 'Themes'     },
+  { id: 'allocate', label: 'Allocation' },
+  { id: 'review',   label: 'Scenarios'  },
+  { id: 'lock',     label: 'Lock'       },
 ];
 
 interface PlanningProgressProps {

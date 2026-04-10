@@ -103,7 +103,20 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
         {/* ── Allocation bar (context, not focus) ────────── */}
         <div className="conv-bar-block">
           <AllocationBar segments={state.segments} />
-          <p className="conv-quarter-label">{state.currentQuarter} baseline</p>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={trail.length === 0 ? 'baseline' : 'draft'}
+              className="conv-quarter-label"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+            >
+              {trail.length === 0
+                ? `${state.currentQuarter} baseline`
+                : `${state.nextQuarter} draft`}
+            </motion.p>
+          </AnimatePresence>
         </div>
 
         {/* ── Question (hero) ────────────────────────────── */}
