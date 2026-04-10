@@ -210,20 +210,19 @@ h1,h2,h3,h4 { font-weight: 700; }
 .screen {
   position: absolute;
   inset: 0;
-  overflow-y: hidden;
+  overflow-y: auto;
   overflow-x: hidden;
 }
 
 /* Default (mobile) inner padding */
 .screen-inner {
   padding: var(--screen-pad-top) var(--screen-pad-side) var(--screen-pad-bottom);
-  height: 100%;
+  min-height: 100%;
   max-width: 680px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: var(--screen-gap);
-  overflow: hidden;
 }
 
 /* Desktop: more breathing room */
