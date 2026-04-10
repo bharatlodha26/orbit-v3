@@ -102,102 +102,108 @@ export function ShareExportScreen({ themes, quarter, onBackToThemes, onBuildPlan
       exit={{ opacity: 0 }}
     >
       <div className="screen-inner share-export-layout">
-        {/* Header */}
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          className="post-lock-check"
-        >
-          ✓
-        </motion.div>
 
-        <div style={{ textAlign: 'center' }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>
-            {quarter} Scoring Complete
-          </h2>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
-            {totalScored}/{totalInitiatives} initiatives scored across {themes.length} themes
-          </p>
-        </div>
+        {/* ── Scrollable body ───────────────────────────────── */}
+        <div className="share-export-body">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            className="post-lock-check"
+          >
+            ✓
+          </motion.div>
 
-        {/* Theme summary cards */}
-        <div className="export-theme-summary">
-          {themes.map(theme => {
-            const scored = theme.initiatives.filter(i => i.status === 'scored');
-            const top = [...scored].sort((a, b) => b.composite - a.composite)[0];
-            return (
-              <div key={theme.id} className="export-theme-card">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <span>{theme.icon}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{theme.name}</span>
-                </div>
-                <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                  {scored.length} scored · {theme.engWeeks} wks
-                </p>
-                {top && (
-                  <p style={{ fontSize: 12, color: 'var(--accent)', marginTop: 2 }}>
-                    Top: {top.name} ({top.composite})
+          <div style={{ textAlign: 'center' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>
+              {quarter} Scoring Complete
+            </h2>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
+              {totalScored}/{totalInitiatives} initiatives scored across {themes.length} themes
+            </p>
+          </div>
+
+          {/* Theme summary cards */}
+          <div className="export-theme-summary" style={{ width: '100%' }}>
+            {themes.map(theme => {
+              const scored = theme.initiatives.filter(i => i.status === 'scored');
+              const top = [...scored].sort((a, b) => b.composite - a.composite)[0];
+              return (
+                <div key={theme.id} className="export-theme-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <span>{theme.icon}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{theme.name}</span>
+                  </div>
+                  <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                    {scored.length} scored · {theme.engWeeks} wks
                   </p>
-                )}
-              </div>
-            );
-          })}
+                  {top && (
+                    <p style={{ fontSize: 12, color: 'var(--accent)', marginTop: 2 }}>
+                      Top: {top.name} ({top.composite})
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Export actions */}
+          <div style={{ width: '100%' }}>
+            <p className="screen-section-label">Export</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {actions.map((action, i) => (
+                <motion.button
+                  key={action.label}
+                  className="btn-action"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.07 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={action.onClick}
+                >
+                  <span style={{ fontSize: 18 }}>{action.icon}</span>
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 500 }}>{action.label}</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>{action.desc}</p>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Export actions */}
-        <p className="screen-section-label">Export</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {actions.map((action, i) => (
+        {/* ── Sticky footer ─────────────────────────────────── */}
+        <div className="share-export-footer">
+          <motion.button
+            className="btn-primary btn-large share-build-plan-btn"
+            whileTap={{ scale: 0.97 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            onClick={onBuildPlan}
+          >
+            Build Quarter Plan →
+          </motion.button>
+          <div style={{ display: 'flex', gap: 12 }}>
             <motion.button
-              key={action.label}
-              className="btn-action"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.07 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={action.onClick}
+              className="btn-secondary"
+              style={{ flex: 1 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={onBackToThemes}
             >
-              <span style={{ fontSize: 18 }}>{action.icon}</span>
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 500 }}>{action.label}</p>
-                <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>{action.desc}</p>
-              </div>
+              Score more themes
             </motion.button>
-          ))}
+            <motion.button
+              className="btn-ghost"
+              style={{ flex: 1, justifyContent: 'center' }}
+              whileTap={{ scale: 0.97 }}
+              onClick={onHome}
+            >
+              Done
+            </motion.button>
+          </div>
         </div>
 
-        {/* Build Plan CTA */}
-        <motion.button
-          className="btn-primary btn-large share-build-plan-btn"
-          whileTap={{ scale: 0.97 }}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          onClick={onBuildPlan}
-        >
-          Build Quarter Plan →
-        </motion.button>
-
-        {/* Navigation */}
-        <div style={{ display: 'flex', gap: 12 }}>
-          <motion.button
-            className="btn-secondary"
-            style={{ flex: 1 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={onBackToThemes}
-          >
-            Score more themes
-          </motion.button>
-          <motion.button
-            className="btn-ghost"
-            style={{ flex: 1, justifyContent: 'center' }}
-            whileTap={{ scale: 0.97 }}
-            onClick={onHome}
-          >
-            Done
-          </motion.button>
-        </div>
       </div>
     </motion.div>
   );

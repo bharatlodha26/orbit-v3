@@ -1638,7 +1638,28 @@ h1,h2,h3,h4 { font-weight: 700; }
 
 /* ─── Share & Export (Screen 3.4) ────────────────────────── */
 .share-export-layout {
+  overflow: hidden;
+}
+
+.share-export-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 20px;
+  padding-bottom: 8px;
+}
+
+.share-export-footer {
+  flex-shrink: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
 }
 
 .export-theme-summary {
@@ -2372,4 +2393,146 @@ h1,h2,h3,h4 { font-weight: 700; }
   .plan-viewer-layout { gap: 12px; }
   .plan-exec-narrative { font-size: 14px; }
   .plan-eng-capacity-total { font-size: 20px; }
+}
+
+/* ─── Quarter Brief Screen ───────────────────────────────── */
+.qb-layout {
+  gap: 18px;
+}
+
+.qb-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.qb-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.qb-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.qb-total-time {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  margin-top: 4px;
+}
+
+.qb-phase-block {
+  background: var(--surface-secondary);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qb-phase-block--dim {
+  opacity: 0.55;
+}
+
+.qb-phase-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qb-phase-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.qb-phase-badge--1 {
+  background: var(--accent);
+  color: #fff;
+}
+
+.qb-phase-badge--2 {
+  background: var(--border);
+  color: var(--text-secondary);
+}
+
+.qb-phase-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.qb-phase-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.qb-step-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qb-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.qb-step-n {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.qb-step-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.qb-snapshot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qb-snapshot-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.qb-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qb-back-btn {
+  align-self: center;
+  font-size: 13px;
+  color: var(--text-tertiary);
 }

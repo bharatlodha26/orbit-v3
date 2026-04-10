@@ -49,6 +49,7 @@ export interface Scenario {
 
 export type Screen =
   | 'home'
+  | 'quarter-brief'
   | 'conversation'
   | 'proposal'
   | 'scenarios'

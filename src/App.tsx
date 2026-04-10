@@ -20,6 +20,7 @@ import { RankedReviewScreen } from './screens/RankedReviewScreen';
 import { ShareExportScreen } from './screens/ShareExportScreen';
 import { PlanCanvasScreen } from './screens/PlanCanvasScreen';
 import { PlanViewerScreen } from './screens/PlanViewerScreen';
+import { QuarterBriefScreen } from './screens/QuarterBriefScreen';
 import './index.css';
 
 const INITIAL_STATE: AppState = {
@@ -44,6 +45,7 @@ type ThemeMode = 'light' | 'dark';
 function getHeaderContext(screen: Screen, nextQuarter: string): string {
   switch (screen) {
     case 'home':               return 'Dashboard';
+    case 'quarter-brief':      return `${nextQuarter} Planning`;
     case 'conversation':       return `${nextQuarter} Planning`;
     case 'proposal':           return `${nextQuarter} Planning`;
     case 'scenarios':          return `${nextQuarter} Scenarios`;
@@ -82,7 +84,7 @@ export default function App() {
     const storedTheme = window.localStorage.getItem('compass-theme');
     if (storedTheme === 'light' || storedTheme === 'dark') return storedTheme;
 
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'dark';
   });
   const [judgment, setJudgment] = useState<JudgmentState>({
     themes: [],
@@ -102,6 +104,10 @@ export default function App() {
   }, []);
 
   const handlePlanStart = () => {
+    go('quarter-brief');
+  };
+
+  const handleBriefStart = () => {
     setWorkingSegments([...state.segments]);
     setReasoning([]);
     go('conversation');
@@ -252,6 +258,16 @@ export default function App() {
           {currentScreen === 'home' && (
             <HomeScreen key="home" state={state} onPlan={handlePlanStart} />
           )}
+          {currentScreen === 'quarter-brief' && (
+            <QuarterBriefScreen
+              key="quarter-brief"
+              nextQuarter={state.nextQuarter}
+              currentQuarter={state.currentQuarter}
+              segments={state.segments}
+              onStart={handleBriefStart}
+              onBack={() => go('home')}
+            />
+          )}
           {currentScreen === 'conversation' && (
             <ConversationScreen
               key="conversation"
@@ -373,6 +389,7 @@ export default function App() {
           )}
         </AnimatePresence>
       </div>
+
     </div>
   );
 }
