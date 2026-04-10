@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { AllocationBar } from '../components/AllocationBar';
 import type { Segment } from '../types';
+import { useAudio } from '../hooks/useAudio';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface QuarterBriefScreenProps {
   nextQuarter: string;
@@ -27,6 +29,9 @@ const PHASE2 = [
 export function QuarterBriefScreen({
   nextQuarter, currentQuarter, segments, onStart, onBack,
 }: QuarterBriefScreenProps) {
+  const audio  = useAudio();
+  const haptic = useHaptic();
+
   return (
     <motion.div
       className="screen"
@@ -108,7 +113,7 @@ export function QuarterBriefScreen({
           <motion.button
             className="btn-primary btn-large"
             whileTap={{ scale: 0.97 }}
-            onClick={onStart}
+            onClick={() => { audio.playTransition(); haptic.tap(); onStart(); }}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
@@ -118,7 +123,7 @@ export function QuarterBriefScreen({
           <motion.button
             className="btn-ghost qb-back-btn"
             whileTap={{ scale: 0.97 }}
-            onClick={onBack}
+            onClick={() => { audio.playNavigate(); haptic.tap(); onBack(); }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}

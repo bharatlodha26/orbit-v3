@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import type { PlanningStep } from '../types';
+import { useAudio } from '../hooks/useAudio';
 
 const STEPS: { id: PlanningStep; label: string }[] = [
   { id: 'context',  label: 'Context'    },
@@ -16,6 +17,7 @@ interface PlanningProgressProps {
 }
 
 export function PlanningProgress({ currentStep, completedSteps, onStepClick }: PlanningProgressProps) {
+  const audio = useAudio();
   return (
     <nav className="planning-progress" aria-label="Planning steps">
       <div className="planning-progress-steps">
@@ -25,13 +27,14 @@ export function PlanningProgress({ currentStep, completedSteps, onStepClick }: P
           const state       = isCurrent ? 'current' : isCompleted ? 'completed' : 'pending';
 
           return (
-            <button
+            <motion.button
               key={step.id}
               className="planning-progress-step"
               data-state={state}
-              onClick={() => isCompleted && onStepClick(step.id)}
+              onClick={() => { if (isCompleted) { audio.playNavigate(); onStepClick(step.id); } }}
               disabled={!isCompleted && !isCurrent}
               aria-current={isCurrent ? 'step' : undefined}
+              whileTap={isCompleted ? { scale: 0.9 } : {}}
             >
               <motion.span
                 className="planning-progress-dot"
@@ -39,7 +42,7 @@ export function PlanningProgress({ currentStep, completedSteps, onStepClick }: P
                 transition={{ type: 'spring', stiffness: 400, damping: 20 }}
               />
               <span className="planning-progress-label">{step.label}</span>
-            </button>
+            </motion.button>
           );
         })}
       </div>

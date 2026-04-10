@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { AllocationBar } from '../components/AllocationBar';
 import { DEFAULT_COLORS } from '../data/defaults';
 import type { ScoringTheme } from '../types';
+import { useAudio } from '../hooks/useAudio';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface ThemeLandingScreenProps {
   themes: ScoringTheme[];
@@ -9,6 +11,8 @@ interface ThemeLandingScreenProps {
 }
 
 export function ThemeLandingScreen({ themes, onSelectTheme }: ThemeLandingScreenProps) {
+  const audio  = useAudio();
+  const haptic = useHaptic();
   const totalWeeks = themes.reduce((sum, theme) => sum + theme.engWeeks, 0);
   const allocationSegments = themes.map(theme => ({
     id: theme.id,
@@ -52,7 +56,7 @@ export function ThemeLandingScreen({ themes, onSelectTheme }: ThemeLandingScreen
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.04 }}
                 whileTap={{ scale: 0.985 }}
-                onClick={() => onSelectTheme(theme.id)}
+                onClick={() => { audio.playChipSelect(); haptic.tap(); onSelectTheme(theme.id); }}
               >
                 <div className="theme-card-header">
                   <span className="theme-card-icon">{theme.icon}</span>

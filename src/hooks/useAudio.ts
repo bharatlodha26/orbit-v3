@@ -107,5 +107,26 @@ export function useAudio() {
     setTimeout(() => playTone(400, 0.2, 'sine', 0.04), 100);
   }, [playTone]);
 
-  return { playSegmentChange, playLockClick, playChipSelect, playTransition };
+  // Soft neutral tap — general button press
+  const playTap = useCallback(() => {
+    playTone(520, 0.07, 'sine', 0.04);
+  }, [playTone]);
+
+  // Toggle / tab switch — slightly brighter
+  const playToggle = useCallback(() => {
+    playTone(600, 0.06, 'triangle', 0.035);
+  }, [playTone]);
+
+  // Navigate back/home — gentle downward note
+  const playNavigate = useCallback(() => {
+    playTone(380, 0.09, 'sine', 0.04);
+  }, [playTone]);
+
+  // Save / confirm — two-note positive
+  const playSave = useCallback(() => {
+    playTone(480, 0.08, 'sine', 0.05);
+    setTimeout(() => playTone(600, 0.1, 'sine', 0.04), 70);
+  }, [playTone]);
+
+  return { playSegmentChange, playLockClick, playChipSelect, playTransition, playTap, playToggle, playNavigate, playSave };
 }

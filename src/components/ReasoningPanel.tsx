@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ReasoningEntry, SignalType } from '../types';
+import { useAudio } from '../hooks/useAudio';
 
 const SIGNAL_LABELS: Record<SignalType, string> = {
   deal_signal:   'deal signal',
@@ -28,19 +29,21 @@ interface ReasoningPanelProps {
 
 export function ReasoningPanel({ reasoning }: ReasoningPanelProps) {
   const [expanded, setExpanded] = useState(false);
+  const audio = useAudio();
 
   if (!reasoning || reasoning.length === 0) return null;
 
   return (
     <div className="reasoning-panel">
-      <button
+      <motion.button
         className="reasoning-panel-toggle"
-        onClick={() => setExpanded(e => !e)}
+        onClick={() => { audio.playToggle(); setExpanded(e => !e); }}
         aria-expanded={expanded}
+        whileTap={{ scale: 0.98 }}
       >
         <span className="reasoning-panel-arrow">{expanded ? '▾' : '▸'}</span>
         <span>Why this allocation</span>
-      </button>
+      </motion.button>
 
       <AnimatePresence>
         {expanded && (

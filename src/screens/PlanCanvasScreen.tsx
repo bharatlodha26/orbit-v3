@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlanState, PlanTheme, PlanInitiative } from '../types';
 import { getInitiativeCompleteness, getPlanCompleteness } from '../services/planMockApi';
+import { useAudio } from '../hooks/useAudio';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface PlanCanvasScreenProps {
   plan: PlanState;
@@ -22,6 +24,8 @@ interface EditorProps {
 function InitiativeEditor({ ini, themeColor, onSave, onClose }: EditorProps) {
   const [draft, setDraft] = useState<PlanInitiative>({ ...ini });
   const [depInput, setDepInput] = useState('');
+  const audio  = useAudio();
+  const haptic = useHaptic();
 
   const set = (key: keyof PlanInitiative, value: unknown) => {
     setDraft(d => ({ ...d, [key]: value }));
@@ -90,7 +94,7 @@ function InitiativeEditor({ ini, themeColor, onSave, onClose }: EditorProps) {
                 {draft.dependencies.map((dep, i) => (
                   <span key={i} className="plan-dep-tag">
                     {dep}
-                    <button onClick={() => removeDep(i)} style={{ marginLeft: 4, fontSize: 10, color: 'var(--text-tertiary)' }}>×</button>
+                    <motion.button whileTap={{ scale: 0.85 }} onClick={() => { audio.playTap(); removeDep(i); }} style={{ marginLeft: 4, fontSize: 10, color: 'var(--text-tertiary)' }}>×</motion.button>
                   </span>
                 ))}
               </div>
@@ -103,7 +107,7 @@ function InitiativeEditor({ ini, themeColor, onSave, onClose }: EditorProps) {
                   onChange={e => setDepInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && addDep()}
                 />
-                <button className="btn-pick" style={{ fontSize: 12, padding: '0 12px' }} onClick={addDep}>+</button>
+                <motion.button className="btn-pick" whileTap={{ scale: 0.95 }} style={{ fontSize: 12, padding: '0 12px' }} onClick={() => { audio.playTap(); addDep(); }}>+</motion.button>
               </div>
             </div>
           </div>
@@ -168,13 +172,14 @@ function InitiativeEditor({ ini, themeColor, onSave, onClose }: EditorProps) {
             <label className="plan-editor-label">Tech risk</label>
             <div className="plan-editor-pill-group">
               {(['Low', 'Medium', 'High'] as const).map(r => (
-                <button
+                <motion.button
                   key={r}
                   className={`plan-pill ${draft.techRisk === r ? 'plan-pill-active' : ''}`}
-                  onClick={() => set('techRisk', r)}
+                  whileTap={{ scale: 0.93 }}
+                  onClick={() => { audio.playToggle(); set('techRisk', r); }}
                 >
                   {r}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
@@ -182,13 +187,14 @@ function InitiativeEditor({ ini, themeColor, onSave, onClose }: EditorProps) {
             <label className="plan-editor-label">Carry-over</label>
             <div className="plan-editor-pill-group">
               {(['No', 'Yes'] as const).map(v => (
-                <button
+                <motion.button
                   key={v}
                   className={`plan-pill ${(draft.isCarryOver ? 'Yes' : 'No') === v ? 'plan-pill-active' : ''}`}
-                  onClick={() => set('isCarryOver', v === 'Yes')}
+                  whileTap={{ scale: 0.93 }}
+                  onClick={() => { audio.playToggle(); set('isCarryOver', v === 'Yes'); }}
                 >
                   {v}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
@@ -243,11 +249,11 @@ function InitiativeEditor({ ini, themeColor, onSave, onClose }: EditorProps) {
             className="btn-primary"
             style={{ flex: 1, padding: '10px 0', fontSize: 14 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => onSave(draft)}
+            onClick={() => { audio.playSave(); haptic.tap(); onSave(draft); }}
           >
             Save
           </motion.button>
-          <button className="btn-ghost" style={{ fontSize: 13 }} onClick={onClose}>Cancel</button>
+          <motion.button className="btn-ghost" whileTap={{ scale: 0.95 }} style={{ fontSize: 13 }} onClick={() => { audio.playTap(); onClose(); }}>Cancel</motion.button>
         </div>
       </div>
     </motion.div>
@@ -266,11 +272,13 @@ interface ThemeSectionProps {
 function ThemeSection({ theme, expandedId, onExpand, onSave }: ThemeSectionProps) {
   const [collapsed, setCollapsed] = useState(false);
   const totalWks = theme.initiatives.reduce((s, i) => s + i.effortWeeks, 0);
+  const audio  = useAudio();
+  const haptic = useHaptic();
 
   return (
     <div className="plan-theme-section" style={{ borderColor: theme.color + '40' }}>
       {/* Theme header */}
-      <button className="plan-theme-header" onClick={() => setCollapsed(c => !c)}>
+      <motion.button className="plan-theme-header" whileTap={{ scale: 0.99 }} onClick={() => { audio.playToggle(); setCollapsed(c => !c); }}>
         <span style={{ fontSize: 18 }}>{theme.icon}</span>
         <div style={{ flex: 1, textAlign: 'left' }}>
           <span className="plan-theme-name">{theme.name}</span>
@@ -283,7 +291,7 @@ function ThemeSection({ theme, expandedId, onExpand, onSave }: ThemeSectionProps
           {theme.allocation}%
         </div>
         <span className="plan-theme-chevron">{collapsed ? '▶' : '▼'}</span>
-      </button>
+      </motion.button>
 
       {/* Initiative list */}
       <AnimatePresence initial={false}>
@@ -301,9 +309,10 @@ function ThemeSection({ theme, expandedId, onExpand, onSave }: ThemeSectionProps
               return (
                 <div key={ini.id} className="plan-initiative-row-wrap">
                   {/* Row */}
-                  <button
+                  <motion.button
                     className={`plan-initiative-row ${isExpanded ? 'plan-initiative-row-active' : ''}`}
-                    onClick={() => onExpand(isExpanded ? null : ini.id)}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => { audio.playTap(); haptic.tap(); onExpand(isExpanded ? null : ini.id); }}
                   >
                     <span className="plan-ini-rank" style={{ color: theme.color }}>{i + 1}</span>
                     <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
@@ -322,7 +331,7 @@ function ThemeSection({ theme, expandedId, onExpand, onSave }: ThemeSectionProps
                       )}
                       <span className="plan-ini-chevron">{isExpanded ? '▲' : '▼'}</span>
                     </div>
-                  </button>
+                  </motion.button>
 
                   {/* Inline editor */}
                   <AnimatePresence>
@@ -349,6 +358,8 @@ function ThemeSection({ theme, expandedId, onExpand, onSave }: ThemeSectionProps
 
 export function PlanCanvasScreen({ plan, onUpdateInitiative, onPreview, onBack }: PlanCanvasScreenProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const audio  = useAudio();
+  const haptic = useHaptic();
 
   const handleExpand = useCallback((id: string | null) => {
     setExpandedId(id);
@@ -371,9 +382,9 @@ export function PlanCanvasScreen({ plan, onUpdateInitiative, onPreview, onBack }
         <div className="plan-canvas-header">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 4, padding: '4px 0' }}>
+              <motion.button className="btn-ghost" whileTap={{ scale: 0.95 }} onClick={() => { audio.playNavigate(); haptic.tap(); onBack(); }} style={{ marginBottom: 4, padding: '4px 0' }}>
                 ← Back
-              </button>
+              </motion.button>
               <h2 className="plan-canvas-title">{plan.quarter} Plan</h2>
               <p className="plan-canvas-subtitle">
                 {plan.themes.length} themes · {totalInitiatives} initiatives · ~{totalWeeks} eng-weeks
@@ -383,7 +394,7 @@ export function PlanCanvasScreen({ plan, onUpdateInitiative, onPreview, onBack }
               className="btn-primary"
               style={{ padding: '10px 18px', fontSize: 14, marginTop: 20 }}
               whileTap={{ scale: 0.97 }}
-              onClick={onPreview}
+              onClick={() => { audio.playTransition(); haptic.tap(); onPreview(); }}
             >
               Preview ▾
             </motion.button>

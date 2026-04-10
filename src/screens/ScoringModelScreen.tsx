@@ -2,6 +2,8 @@ import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ScoringTheme, ScoringDimension } from '../types';
 import { generateModelNarrative, updateModelFromNL } from '../services/scoringMockApi';
+import { useAudio } from '../hooks/useAudio';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface ScoringModelScreenProps {
   theme: ScoringTheme;
@@ -10,6 +12,8 @@ interface ScoringModelScreenProps {
 }
 
 export function ScoringModelScreen({ theme, onConfirm, onBack }: ScoringModelScreenProps) {
+  const audio  = useAudio();
+  const haptic = useHaptic();
   const [dimensions, setDimensions] = useState<ScoringDimension[]>(() => theme.model.map(d => ({ ...d })));
   const [nlInput, setNlInput] = useState('');
   const [changes, setChanges] = useState<Array<{ name: string; oldWeight: number; newWeight: number; reason: string }>>([]);
@@ -68,9 +72,9 @@ export function ScoringModelScreen({ theme, onConfirm, onBack }: ScoringModelScr
 
         {/* ── Fixed header ─────────────────────────────────── */}
         <div className="scoring-model-header">
-          <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 6, padding: '4px 0' }}>
+          <motion.button className="btn-ghost" whileTap={{ scale: 0.95 }} onClick={() => { audio.playNavigate(); haptic.tap(); onBack(); }} style={{ marginBottom: 6, padding: '4px 0' }}>
             ← Back to themes
-          </button>
+          </motion.button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 22, flexShrink: 0 }}>{theme.icon}</span>
             <div>
@@ -110,12 +114,15 @@ export function ScoringModelScreen({ theme, onConfirm, onBack }: ScoringModelScr
                   onPointerDown={(e) => {
                     e.currentTarget.setPointerCapture(e.pointerId);
                     setDragging(dim.id);
+                    audio.playSegmentChange(dim.weight, true);
+                    haptic.grab();
                     const rect = e.currentTarget.getBoundingClientRect();
                     handleWeightDrag(dim.id, e.clientX, rect);
 
-                    const onMove = (ev: PointerEvent) => handleWeightDrag(dim.id, ev.clientX, rect);
+                    const onMove = (ev: PointerEvent) => { audio.playSegmentChange(dim.weight, true); handleWeightDrag(dim.id, ev.clientX, rect); };
                     const onUp = () => {
                       setDragging(null);
+                      haptic.release();
                       window.removeEventListener('pointermove', onMove);
                       window.removeEventListener('pointerup', onUp);
                     };
@@ -153,7 +160,7 @@ export function ScoringModelScreen({ theme, onConfirm, onBack }: ScoringModelScr
               <motion.button
                 className="btn-icon"
                 whileTap={{ scale: 0.9 }}
-                onClick={handleNLSubmit}
+                onClick={() => { audio.playChipSelect(); handleNLSubmit(); }}
                 disabled={!nlInput.trim() || isUpdating}
                 aria-label="Apply"
               >
@@ -197,7 +204,7 @@ export function ScoringModelScreen({ theme, onConfirm, onBack }: ScoringModelScr
           <motion.button
             className="btn-primary btn-large"
             whileTap={{ scale: 0.97 }}
-            onClick={() => onConfirm(dimensions, narrative)}
+            onClick={() => { audio.playSave(); haptic.tap(); onConfirm(dimensions, narrative); }}
           >
             Confirm model — start scoring →
           </motion.button>

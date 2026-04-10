@@ -38,7 +38,7 @@ export function HomeScreen({ state, onPlan }: HomeScreenProps) {
               <span style={{ color: 'var(--text-tertiary)', fontSize: 14 }}>Tap to set your first allocation</span>
             </div>
           </motion.div>
-          <motion.button className="btn-primary" onClick={onPlan} whileTap={{ scale: 0.97 }}>
+          <motion.button className="btn-primary" onClick={() => { haptic.tap(); onPlan(); }} whileTap={{ scale: 0.97 }}>
             Get started →
           </motion.button>
         </div>
@@ -72,7 +72,7 @@ export function HomeScreen({ state, onPlan }: HomeScreenProps) {
           <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
             {state.onTrack} of {state.totalInitiatives} on track
           </p>
-          <motion.button className="btn-primary" onClick={onPlan} whileTap={{ scale: 0.97 }}>
+          <motion.button className="btn-primary" onClick={() => { haptic.tap(); onPlan(); }} whileTap={{ scale: 0.97 }}>
             Plan {state.nextQuarter} →
           </motion.button>
         </div>

@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
+import { AllocationBar } from '../components/AllocationBar';
 import type { Segment, ThinkingTrailEntry, ReasoningEntry } from '../types';
-import { generateNarrative, getNotList } from '../data/defaults';
+import { generateNarrative } from '../data/defaults';
+import { useAudio } from '../hooks/useAudio';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface PostLockScreenProps {
   segments: Segment[];
@@ -12,16 +15,13 @@ interface PostLockScreenProps {
   onStartScoring: () => void;
 }
 
-interface ActionItem {
-  label: string;
-  icon: string;
-  onClick: () => void;
-  primary?: boolean;
-}
-
-export function PostLockScreen({ segments, quarter, thinkingTrail, reasoning, onStakeholderLoop, onHome, onStartScoring }: PostLockScreenProps) {
+export function PostLockScreen({
+  segments, quarter, thinkingTrail, reasoning,
+  onHome, onStartScoring,
+}: PostLockScreenProps) {
   const narrative = generateNarrative(segments);
-  const notList = getNotList(segments);
+  const audio  = useAudio();
+  const haptic = useHaptic();
 
   const handleShare = async () => {
     const text = `${quarter} Allocation: ${segments.map(s => `${s.name} ${s.percentage}%`).join(' · ')}\n"${narrative}"`;
@@ -29,9 +29,7 @@ export function PostLockScreen({ segments, quarter, thinkingTrail, reasoning, on
       await navigator.share({ title: `${quarter} Allocation`, text });
     } else {
       await navigator.clipboard.writeText(text);
-      alert('Copied to clipboard!');
     }
-    setTimeout(onStakeholderLoop, 500);
   };
 
   const handleDownload = () => {
@@ -39,19 +37,10 @@ export function PostLockScreen({ segments, quarter, thinkingTrail, reasoning, on
       quarter,
       lockedAt: new Date().toISOString(),
       narrative,
-      segments: segments.map(s => ({
-        name: s.name,
-        percentage: s.percentage,
-        isLocked: s.isLocked ?? false,
-      })),
-      notThisQuarter: notList,
+      segments: segments.map(s => ({ name: s.name, percentage: s.percentage, isLocked: s.isLocked ?? false })),
       reasoning: reasoning.map(entry => ({
         theme: entry.themeName,
-        evidence: entry.bullets.map(b => ({
-          text: b.text,
-          signalType: b.signalType,
-          sourceQuote: b.sourceQuote,
-        })),
+        evidence: entry.bullets.map(b => ({ text: b.text, signalType: b.signalType, sourceQuote: b.sourceQuote })),
       })),
       decisionTrail: {
         conversationTurns: thinkingTrail.length,
@@ -62,22 +51,10 @@ export function PostLockScreen({ segments, quarter, thinkingTrail, reasoning, on
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${quarter.replace(/\s/g, '-').toLowerCase()}-quarterly-bet.json`;
+    a.download = `${quarter.replace(/\s/g, '-').toLowerCase()}-allocation.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
-
-  const handleViewTrail = () => {
-    const lines = thinkingTrail.map(t => `Q: ${t.question}\nA: ${t.answerText}`).join('\n\n');
-    alert('Thinking trail:\n\n' + lines);
-  };
-
-  const actions: ActionItem[] = [
-    { label: 'Share as link', icon: '↗', onClick: handleShare, primary: true },
-    { label: 'Download one-pager', icon: '↓', onClick: handleDownload },
-    { label: 'View thinking trail', icon: '⌛', onClick: handleViewTrail },
-    { label: 'Next: Score initiatives within each theme →', icon: '⬡', onClick: onStartScoring, primary: false },
-  ];
 
   return (
     <motion.div
@@ -87,51 +64,76 @@ export function PostLockScreen({ segments, quarter, thinkingTrail, reasoning, on
       exit={{ opacity: 0 }}
     >
       <div className="screen-inner post-lock-layout">
-        {/* Confirmation mark */}
+
+        {/* ── Celebration mark ─────────────────────────────── */}
         <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           className="post-lock-check"
+          initial={{ scale: 0.4, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 320, damping: 18, delay: 0.05 }}
         >
           ✓
         </motion.div>
 
-        <div style={{ textAlign: 'center' }}>
-          <h2 className="post-lock-title">✓ {quarter} Locked</h2>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', fontStyle: 'italic', marginTop: 4 }}>
-            "{narrative}"
-          </p>
-        </div>
+        {/* ── Title ────────────────────────────────────────── */}
+        <motion.div
+          className="post-lock-hero"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <h2 className="post-lock-title">{quarter} allocation locked</h2>
+          <p className="post-lock-narrative">{narrative}</p>
+        </motion.div>
 
-        {/* Action list */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {actions.map((action, i) => (
-            <motion.button
-              key={action.label}
-              className={action.primary ? 'btn-action btn-action-primary' : 'btn-action'}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.07 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={action.onClick}
-            >
-              <span style={{ fontSize: 16, minWidth: 20 }}>{action.icon}</span>
-              <span>{action.label}</span>
-            </motion.button>
-          ))}
-        </div>
+        {/* ── Locked bar — the achievement ─────────────────── */}
+        <motion.div
+          className="post-lock-bar-block"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22 }}
+        >
+          <AllocationBar segments={segments} />
+          <div className="post-lock-segments">
+            {segments.map(seg => (
+              <div key={seg.id} className="post-lock-seg-row">
+                <span
+                  className="post-lock-seg-dot"
+                  style={{ background: seg.color }}
+                />
+                <span className="post-lock-seg-name">{seg.name}</span>
+                <span className="post-lock-seg-pct">{seg.percentage}%</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
 
+        {/* ── Primary CTA ──────────────────────────────────── */}
         <motion.button
-          className="btn-ghost"
+          className="btn-primary btn-large post-lock-cta"
+          whileTap={{ scale: 0.97 }}
+          onClick={() => { audio.playTransition(); haptic.tap(); onStartScoring(); }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          Score initiatives →
+        </motion.button>
+
+        {/* ── Secondary actions ────────────────────────────── */}
+        <motion.div
+          className="post-lock-secondary"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          onClick={onHome}
-          style={{ color: 'var(--text-tertiary)', fontSize: 13 }}
+          transition={{ delay: 0.38 }}
         >
-          Back to home
-        </motion.button>
+          <motion.button className="post-lock-link" whileTap={{ scale: 0.94 }} onClick={() => { audio.playTap(); handleShare(); }}>Share</motion.button>
+          <span className="post-lock-divider">·</span>
+          <motion.button className="post-lock-link" whileTap={{ scale: 0.94 }} onClick={() => { audio.playTap(); handleDownload(); }}>Download</motion.button>
+          <span className="post-lock-divider">·</span>
+          <motion.button className="post-lock-link" whileTap={{ scale: 0.94 }} onClick={() => { audio.playNavigate(); haptic.tap(); onHome(); }}>Home</motion.button>
+        </motion.div>
+
       </div>
     </motion.div>
   );

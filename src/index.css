@@ -962,6 +962,7 @@ h1,h2,h3,h4 { font-weight: 700; }
 /* ─── Post-lock layout ───────────────────────────────────── */
 .post-lock-layout {
   align-items: center;
+  gap: 20px;
 }
 
 .post-lock-check {
@@ -974,12 +975,97 @@ h1,h2,h3,h4 { font-weight: 700; }
   justify-content: center;
   font-size: 26px;
   color: white;
+  flex-shrink: 0;
+}
+
+.post-lock-hero {
+  text-align: center;
 }
 
 .post-lock-title {
   font-size: 20px;
   font-weight: 700;
   color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.post-lock-narrative {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+.post-lock-bar-block {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface-secondary);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.post-lock-segments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.post-lock-seg-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.post-lock-seg-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.post-lock-seg-name {
+  font-size: 13px;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.post-lock-seg-pct {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.post-lock-cta {
+  width: 100%;
+}
+
+.post-lock-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.post-lock-link {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px 2px;
+  transition: color 0.15s;
+}
+
+.post-lock-link:hover {
+  color: var(--text-secondary);
+}
+
+.post-lock-divider {
+  font-size: 13px;
+  color: var(--border);
 }
 
 /* ─── Theme Landing (Screen 3.0) ────────────────────────── */

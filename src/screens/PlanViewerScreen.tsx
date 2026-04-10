@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlanState, PlanInitiative, PlanAudienceView } from '../types';
+import { useAudio } from '../hooks/useAudio';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface PlanViewerScreenProps {
   plan: PlanState;
@@ -11,6 +13,7 @@ interface PlanViewerScreenProps {
 // ── Executive View (4.1a) ────────────────────────────────────
 
 function ExecutiveView({ plan }: { plan: PlanState }) {
+  const audio = useAudio();
   // Group initiatives by OKR mapping
   const okrGroups = new Map<string, { initiatives: (PlanInitiative & { themeColor: string; themeName: string })[]; metric: string }>();
 
@@ -124,12 +127,12 @@ function ExecutiveView({ plan }: { plan: PlanState }) {
 
       {/* Share row */}
       <div style={{ display: 'flex', gap: 10 }}>
-        <button className="btn-secondary" style={{ flex: 1, fontSize: 13 }}>
+        <motion.button className="btn-secondary" whileTap={{ scale: 0.97 }} onClick={() => audio.playTap()} style={{ flex: 1, fontSize: 13 }}>
           📤 Share this view
-        </button>
-        <button className="btn-secondary" style={{ flex: 1, fontSize: 13 }}>
+        </motion.button>
+        <motion.button className="btn-secondary" whileTap={{ scale: 0.97 }} onClick={() => audio.playTap()} style={{ flex: 1, fontSize: 13 }}>
           📄 Export PDF
-        </button>
+        </motion.button>
       </div>
     </div>
   );
@@ -138,6 +141,7 @@ function ExecutiveView({ plan }: { plan: PlanState }) {
 // ── Engineering View (4.1b) ──────────────────────────────────
 
 function EngineeringView({ plan }: { plan: PlanState }) {
+  const audio = useAudio();
   const totalWeeks = plan.themes.reduce((s, t) => s + t.engWeeks, 0);
 
   return (
@@ -234,9 +238,9 @@ function EngineeringView({ plan }: { plan: PlanState }) {
         </div>
       )}
 
-      <button className="btn-secondary" style={{ fontSize: 13 }}>
+      <motion.button className="btn-secondary" whileTap={{ scale: 0.97 }} onClick={() => audio.playTap()} style={{ fontSize: 13 }}>
         📤 Share this view
-      </button>
+      </motion.button>
     </div>
   );
 }
@@ -244,6 +248,7 @@ function EngineeringView({ plan }: { plan: PlanState }) {
 // ── GTM View (4.1c) ──────────────────────────────────────────
 
 function GTMView({ plan }: { plan: PlanState }) {
+  const audio = useAudio();
   // Flatten and sort all initiatives by targetShipWeek
   const allInitiatives = plan.themes
     .flatMap(theme => theme.initiatives.map(ini => ({ ...ini, themeColor: theme.color })))
@@ -304,12 +309,12 @@ function GTMView({ plan }: { plan: PlanState }) {
       </div>
 
       <div style={{ display: 'flex', gap: 10 }}>
-        <button className="btn-secondary" style={{ flex: 1, fontSize: 13 }}>
+        <motion.button className="btn-secondary" whileTap={{ scale: 0.97 }} onClick={() => audio.playTap()} style={{ flex: 1, fontSize: 13 }}>
           📤 Share this view
-        </button>
-        <button className="btn-secondary" style={{ flex: 1, fontSize: 13 }}>
+        </motion.button>
+        <motion.button className="btn-secondary" whileTap={{ scale: 0.97 }} onClick={() => audio.playTap()} style={{ flex: 1, fontSize: 13 }}>
           🔗 Copy link for Sales
-        </button>
+        </motion.button>
       </div>
     </div>
   );
@@ -319,6 +324,8 @@ function GTMView({ plan }: { plan: PlanState }) {
 
 export function PlanViewerScreen({ plan, onBack, initialView = 'executive' }: PlanViewerScreenProps) {
   const [activeView, setActiveView] = useState<PlanAudienceView>(initialView);
+  const audio  = useAudio();
+  const haptic = useHaptic();
 
   const tabs: { id: PlanAudienceView; label: string }[] = [
     { id: 'executive', label: 'Executive' },
@@ -338,9 +345,9 @@ export function PlanViewerScreen({ plan, onBack, initialView = 'executive' }: Pl
         {/* Header */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button className="btn-ghost" onClick={onBack} style={{ padding: '4px 0' }}>
+            <motion.button className="btn-ghost" whileTap={{ scale: 0.95 }} onClick={() => { audio.playNavigate(); haptic.tap(); onBack(); }} style={{ padding: '4px 0' }}>
               ← Back to Canvas
-            </button>
+            </motion.button>
           </div>
           <h2 className="plan-canvas-title" style={{ marginTop: 4 }}>{plan.quarter} Plan</h2>
         </div>
@@ -348,13 +355,14 @@ export function PlanViewerScreen({ plan, onBack, initialView = 'executive' }: Pl
         {/* Tab switcher */}
         <div className="plan-view-tabs">
           {tabs.map(tab => (
-            <button
+            <motion.button
               key={tab.id}
               className={`plan-view-tab ${activeView === tab.id ? 'plan-view-tab-active' : ''}`}
-              onClick={() => setActiveView(tab.id)}
+              onClick={() => { audio.playToggle(); setActiveView(tab.id); }}
+              whileTap={{ scale: 0.95 }}
             >
               {tab.label}
-            </button>
+            </motion.button>
           ))}
         </div>
 

@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import type { ScoringTheme } from '../types';
 import { QUALITY_EMOJI } from '../services/scoringMockApi';
+import { useAudio } from '../hooks/useAudio';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface RankedReviewScreenProps {
   theme: ScoringTheme;
@@ -14,6 +16,8 @@ export function RankedReviewScreen({ theme, onOverride, onDone, onBack }: Ranked
   const [overrideTarget, setOverrideTarget] = useState<string | null>(null);
   const [overrideReason, setOverrideReason] = useState('');
   const [overrideRankInput, setOverrideRankInput] = useState('');
+  const audio  = useAudio();
+  const haptic = useHaptic();
 
   const ranked = useMemo(() => {
     const scored = theme.initiatives
@@ -57,9 +61,9 @@ export function RankedReviewScreen({ theme, onOverride, onDone, onBack }: Ranked
       <div className="screen-inner ranked-review-layout">
         {/* Header */}
         <div>
-          <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 8 }}>
+          <motion.button className="btn-ghost" onClick={() => { audio.playNavigate(); haptic.tap(); onBack(); }} style={{ marginBottom: 8 }} whileTap={{ scale: 0.95 }}>
             ← Back to scoring
-          </button>
+          </motion.button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 22 }}>{theme.icon}</span>
             <div>
@@ -139,20 +143,18 @@ export function RankedReviewScreen({ theme, onOverride, onDone, onBack }: Ranked
                           onKeyDown={e => e.key === 'Enter' && handleOverrideSubmit(ini.id)}
                           style={{ flex: 1 }}
                         />
-                        <button className="btn-pick" onClick={() => handleOverrideSubmit(ini.id)}>Set</button>
-                        <button className="btn-ghost" onClick={() => setOverrideTarget(null)} style={{ fontSize: 12 }}>Cancel</button>
+                        <motion.button className="btn-pick" whileTap={{ scale: 0.95 }} onClick={() => { audio.playSave(); haptic.tap(); handleOverrideSubmit(ini.id); }}>Set</motion.button>
+                        <motion.button className="btn-ghost" whileTap={{ scale: 0.95 }} onClick={() => { audio.playTap(); setOverrideTarget(null); }} style={{ fontSize: 12 }}>Cancel</motion.button>
                       </div>
                     ) : (
-                      <button
+                      <motion.button
                         className="btn-ghost"
                         style={{ fontSize: 11, padding: '4px 6px', marginTop: 4 }}
-                        onClick={() => {
-                          setOverrideTarget(ini.id);
-                          setOverrideRankInput(String(ini.rank));
-                        }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => { audio.playToggle(); setOverrideTarget(ini.id); setOverrideRankInput(String(ini.rank)); }}
                       >
                         Override rank
-                      </button>
+                      </motion.button>
                     )}
                   </div>
                 </motion.div>
@@ -165,7 +167,7 @@ export function RankedReviewScreen({ theme, onOverride, onDone, onBack }: Ranked
         <motion.button
           className="btn-primary btn-large"
           whileTap={{ scale: 0.97 }}
-          onClick={onDone}
+          onClick={() => { audio.playSave(); haptic.tap(); onDone(); }}
         >
           Finalize — go to export
         </motion.button>

@@ -1,4 +1,6 @@
 import { motion } from 'framer-motion';
+import { useAudio } from '../hooks/useAudio';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface AppHeaderProps {
   context: string;
@@ -8,12 +10,20 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ context, onHome, themeMode, onToggleTheme }: AppHeaderProps) {
+  const audio  = useAudio();
+  const haptic = useHaptic();
+
   return (
     <header className="app-header">
-      <button className="app-header-logo" onClick={onHome} aria-label="Go to dashboard">
+      <motion.button
+        className="app-header-logo"
+        onClick={() => { audio.playNavigate(); haptic.tap(); onHome(); }}
+        aria-label="Go to dashboard"
+        whileTap={{ scale: 0.94 }}
+      >
         <span className="app-header-logo-icon">◎</span>
         <span className="app-header-logo-name">Compass</span>
-      </button>
+      </motion.button>
 
       <motion.p
         key={context}
@@ -26,16 +36,17 @@ export function AppHeader({ context, onHome, themeMode, onToggleTheme }: AppHead
       </motion.p>
 
       <div className="app-header-actions">
-        <button
+        <motion.button
           type="button"
           className="theme-toggle"
-          onClick={onToggleTheme}
+          onClick={() => { audio.playToggle(); onToggleTheme(); }}
           aria-label={`Switch to ${themeMode === 'light' ? 'dark' : 'light'} mode`}
           aria-pressed={themeMode === 'dark'}
+          whileTap={{ scale: 0.95 }}
         >
           <span className={`theme-toggle-option ${themeMode === 'light' ? 'is-active' : ''}`}>Light</span>
           <span className={`theme-toggle-option ${themeMode === 'dark' ? 'is-active' : ''}`}>Dark</span>
-        </button>
+        </motion.button>
 
         <div className="app-header-user">
           <div className="app-header-avatar">PS</div>

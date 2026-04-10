@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import type { ScoringTheme } from '../types';
 import { QUALITY_LABEL } from '../services/scoringMockApi';
+import { useAudio } from '../hooks/useAudio';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface ShareExportScreenProps {
   themes: ScoringTheme[];
@@ -11,6 +13,8 @@ interface ShareExportScreenProps {
 }
 
 export function ShareExportScreen({ themes, quarter, onBackToThemes, onBuildPlan, onHome }: ShareExportScreenProps) {
+  const audio  = useAudio();
+  const haptic = useHaptic();
 
   const handleExportOnePager = () => {
     const lines: string[] = [
@@ -159,7 +163,7 @@ export function ShareExportScreen({ themes, quarter, onBackToThemes, onBuildPlan
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + i * 0.07 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={action.onClick}
+                  onClick={() => { audio.playTap(); haptic.tap(); action.onClick(); }}
                 >
                   <span style={{ fontSize: 18 }}>{action.icon}</span>
                   <div>
@@ -180,7 +184,7 @@ export function ShareExportScreen({ themes, quarter, onBackToThemes, onBuildPlan
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            onClick={onBuildPlan}
+            onClick={() => { audio.playTransition(); haptic.tap(); onBuildPlan(); }}
           >
             Build Quarter Plan →
           </motion.button>
@@ -189,7 +193,7 @@ export function ShareExportScreen({ themes, quarter, onBackToThemes, onBuildPlan
               className="btn-secondary"
               style={{ flex: 1 }}
               whileTap={{ scale: 0.97 }}
-              onClick={onBackToThemes}
+              onClick={() => { audio.playNavigate(); haptic.tap(); onBackToThemes(); }}
             >
               Score more themes
             </motion.button>
@@ -197,7 +201,7 @@ export function ShareExportScreen({ themes, quarter, onBackToThemes, onBuildPlan
               className="btn-ghost"
               style={{ flex: 1, justifyContent: 'center' }}
               whileTap={{ scale: 0.97 }}
-              onClick={onHome}
+              onClick={() => { audio.playNavigate(); haptic.tap(); onHome(); }}
             >
               Done
             </motion.button>

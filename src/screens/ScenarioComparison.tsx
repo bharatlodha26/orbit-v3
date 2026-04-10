@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { AllocationBar } from '../components/AllocationBar';
 import type { Scenario } from '../types';
+import { useAudio } from '../hooks/useAudio';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface ScenarioComparisonProps {
   scenarios: Scenario[];
@@ -51,6 +53,8 @@ export function ScenarioComparison({ scenarios, onPick, onBack }: ScenarioCompar
   const top3 = getDistinctTop3(scenarios);
   const tradeoff = top3.length >= 2 ? getTradeoffSentence(top3[0], top3[1]) : null;
   const recommendation = getRecommendation(top3);
+  const audio  = useAudio();
+  const haptic = useHaptic();
 
   return (
     <motion.div
@@ -62,7 +66,7 @@ export function ScenarioComparison({ scenarios, onPick, onBack }: ScenarioCompar
       <div className="screen-inner scenarios-layout">
         {/* Header row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn-ghost" onClick={onBack} style={{ fontSize: 20, padding: '4px 8px' }}>←</button>
+          <motion.button className="btn-ghost" onClick={() => { audio.playNavigate(); haptic.tap(); onBack(); }} style={{ fontSize: 20, padding: '4px 8px' }} whileTap={{ scale: 0.92 }}>←</motion.button>
           <p className="screen-section-label">Scenario Comparison</p>
         </div>
 
@@ -81,7 +85,7 @@ export function ScenarioComparison({ scenarios, onPick, onBack }: ScenarioCompar
               <motion.button
                 className="btn-pick scenario-pick-btn"
                 whileTap={{ scale: 0.95 }}
-                onClick={() => onPick(scenario)}
+                onClick={() => { audio.playChipSelect(); haptic.tap(); onPick(scenario); }}
               >
                 Pick this →
               </motion.button>

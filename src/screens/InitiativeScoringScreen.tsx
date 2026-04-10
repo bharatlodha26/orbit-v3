@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ScoringTheme, Initiative, DimensionScore, ScoringDimension } from '../types';
 import { scoreInitiative } from '../services/scoringMockApi';
+import { useAudio } from '../hooks/useAudio';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface InitiativeScoringScreenProps {
   theme: ScoringTheme;
@@ -28,6 +30,8 @@ export function InitiativeScoringScreen({
   const [sliderScores, setSliderScores] = useState<Record<string, number>>({});
   const [nlInput,      setNlInput]      = useState('');
   const [isScoring,    setIsScoring]    = useState(false);
+  const audio  = useAudio();
+  const haptic = useHaptic();
 
   const initiative  = theme.initiatives[currentIdx];
   const scored      = theme.initiatives.filter(i => i.status === 'scored').length;
@@ -127,9 +131,9 @@ export function InitiativeScoringScreen({
 
         {/* ── Header ────────────────────────────────────────── */}
         <div className="si-header">
-          <button className="btn-ghost" onClick={onBack} style={{ padding: '4px 0', marginBottom: 8 }}>
+          <motion.button className="btn-ghost" whileTap={{ scale: 0.95 }} onClick={() => { audio.playNavigate(); haptic.tap(); onBack(); }} style={{ padding: '4px 0', marginBottom: 8 }}>
             ← Back to model
-          </button>
+          </motion.button>
           <div className="si-header-row">
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <span style={{ fontSize: 17 }}>{theme.icon}</span>
@@ -214,11 +218,12 @@ export function InitiativeScoringScreen({
                       min={1} max={5} step={1}
                       value={val > 0 ? val : 1}
                       style={{ '--dim-color': dim.color } as React.CSSProperties}
-                      onChange={e => setSliderScores(prev => ({ ...prev, [dim.id]: Number(e.target.value) }))}
+                      onChange={e => { audio.playSegmentChange(Number(e.target.value), true); setSliderScores(prev => ({ ...prev, [dim.id]: Number(e.target.value) })); }}
                       onMouseDown={() => {
-                        // Ensure a click registers even if already at min
+                        haptic.grab();
                         if (val === 0) setSliderScores(prev => ({ ...prev, [dim.id]: 1 }));
                       }}
+                      onMouseUp={() => haptic.release()}
                     />
                     <div className="si-slider-pips">
                       {[1,2,3,4,5].map(n => (
@@ -239,13 +244,13 @@ export function InitiativeScoringScreen({
 
         {/* ── Footer ────────────────────────────────────────── */}
         <div className="si-footer">
-          <button className="si-skip-btn" onClick={advance}>Skip</button>
+          <motion.button className="si-skip-btn" whileTap={{ scale: 0.95 }} onClick={() => { audio.playTap(); advance(); }}>Skip</motion.button>
           <motion.button
             className="btn-primary si-cta-btn"
             disabled={!ctaEnabled}
             style={{ opacity: ctaEnabled ? 1 : 0.35 }}
             whileTap={ctaEnabled ? { scale: 0.97 } : {}}
-            onClick={handleCta}
+            onClick={() => { if (ctaEnabled) { audio.playSave(); haptic.tap(); handleCta(); } }}
           >
             {ctaLabel}
           </motion.button>
