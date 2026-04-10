@@ -93,7 +93,7 @@ export function AllocationBar({
     }
   }, [haptic]);
 
-  const barHeight = compact ? 48 : 72;
+  const barHeight: number | string = compact ? 48 : 'var(--allocation-bar-height)';
 
   return (
     <div

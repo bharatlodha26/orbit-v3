@@ -80,7 +80,7 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
 
     setTimeout(async () => {
       setTurn(nextTurn);
-      setQuestionKey(k => k + 1);
+      setQuestionKey(key => key + 1);
       await loadTurn(nextTurn, newHistory, newSegments);
     }, 350);
   }, [currentTurnData, state.segments, onSegmentsChange, trail, history, turn, audio, haptic, loadTurn, onComplete]);
@@ -98,38 +98,18 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <div className="screen-inner" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {/* Progress stepper */}
+      <div className="screen-inner conversation-screen-inner">
         <PlanningProgress
           currentStep={currentStep}
           completedSteps={completedSteps}
           onStepClick={onStepClick}
-          quarter={state.nextQuarter}
         />
 
-        {/* Bar at top */}
-        <div>
+        <div className="conversation-bar-block">
           <AllocationBar segments={state.segments} />
-          <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, textAlign: 'center' }}>
-            — {state.currentQuarter} (current) —
-          </p>
+          <p className="conversation-current-quarter">- {state.currentQuarter} (current) -</p>
         </div>
 
-        {/* Progress dots */}
-        <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-          {Array.from({ length: TOTAL_TURNS }).map((_, i) => (
-            <div
-              key={i}
-              style={{
-                width: 6, height: 6, borderRadius: '50%',
-                backgroundColor: i <= turn ? 'var(--accent)' : 'var(--border)',
-                transition: 'background-color 0.3s',
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Question */}
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div
@@ -137,18 +117,14 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              style={{
-                background: 'var(--surface)', borderRadius: 12, padding: '20px',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid var(--border)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 60,
-              }}
+              className="conversation-turn-card conversation-turn-card-loading"
             >
               <motion.span
                 animate={{ opacity: [0.3, 1, 0.3] }}
                 transition={{ repeat: Infinity, duration: 1.2 }}
                 style={{ fontSize: 14, color: 'var(--text-tertiary)' }}
               >
-                Thinking…
+                Thinking...
               </motion.span>
             </motion.div>
           ) : currentTurnData && (
@@ -158,19 +134,14 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -16 }}
               transition={{ duration: 0.2 }}
-              style={{
-                background: 'var(--surface)', borderRadius: 12, padding: '20px',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid var(--border)',
-              }}
+              className="conversation-turn-card conversation-question-surface"
             >
-              <p style={{ fontSize: 17, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4 }}>
-                {currentTurnData.question}
-              </p>
+              <span className="conversation-context-eyebrow">Question</span>
+              <p className="conversation-turn-question">{currentTurnData.question}</p>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Suggestion chips */}
         {!isLoading && currentTurnData && (
           <AnimatePresence mode="wait">
             <motion.div
@@ -178,12 +149,13 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+              className="conversation-chip-list"
             >
+              <p className="conversation-section-label">Suggested responses</p>
               {currentTurnData.chips.map((chip, i) => (
                 <motion.button
                   key={chip}
-                  className="chip"
+                  className="chip context-chip"
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
@@ -197,24 +169,26 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
           </AnimatePresence>
         )}
 
-        {/* Text input */}
         {!isLoading && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input
-              className="text-input"
-              placeholder="Or type your own..."
-              value={inputText}
-              onChange={e => setInputText(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-            />
-            <motion.button
-              className="btn-icon"
-              whileTap={{ scale: 0.9 }}
-              onClick={() => { audio.playChipSelect(); handleSubmit(); }}
-              disabled={!inputText.trim()}
-            >
-              ➤
-            </motion.button>
+          <div className="conversation-input-row context-input-wrap">
+            <p className="conversation-section-label">Custom response</p>
+            <div className="conversation-input-shell context-input-shell">
+              <input
+                className="text-input"
+                placeholder="Or type your own..."
+                value={inputText}
+                onChange={e => setInputText(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+              />
+              <motion.button
+                className="btn-icon context-submit-btn"
+                whileTap={{ scale: 0.9 }}
+                onClick={() => { audio.playChipSelect(); handleSubmit(); }}
+                disabled={!inputText.trim()}
+              >
+                {'->'}
+              </motion.button>
+            </div>
           </div>
         )}
       </div>

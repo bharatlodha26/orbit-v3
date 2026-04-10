@@ -63,7 +63,6 @@ export function ProposalScreen({
           currentStep="allocate"
           completedSteps={['context', 'themes']}
           onStepClick={onStepClick}
-          quarter={state.nextQuarter}
         />
 
         {/* Header */}

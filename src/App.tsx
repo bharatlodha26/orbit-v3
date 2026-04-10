@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import type { AppState, Scenario, Screen, Segment, ThinkingTrailEntry, PlanningStep, ReasoningEntry, JudgmentState, Initiative, ScoringDimension } from './types';
 
@@ -35,6 +35,8 @@ const INITIAL_STATE: AppState = {
   completedSteps: [],
 };
 
+type ThemeMode = 'light' | 'dark';
+
 // Short context labels — avoid long text that stretches the breadcrumb
 function getHeaderContext(screen: Screen, nextQuarter: string): string {
   switch (screen) {
@@ -69,11 +71,24 @@ export default function App() {
   const [workingSegments, setWorkingSegments] = useState<Segment[]>([...Q2_SEGMENTS]);
   const [prevSegments] = useState<Segment[]>([...Q2_SEGMENTS]);
   const [reasoning, setReasoning] = useState<ReasoningEntry[]>([]);
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    if (typeof window === 'undefined') return 'light';
+
+    const storedTheme = window.localStorage.getItem('compass-theme');
+    if (storedTheme === 'light' || storedTheme === 'dark') return storedTheme;
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
   const [judgment, setJudgment] = useState<JudgmentState>({
     themes: [],
     activeThemeId: null,
     modelConfirmed: false,
   });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeMode;
+    window.localStorage.setItem('compass-theme', themeMode);
+  }, [themeMode]);
 
   const go = useCallback((screen: Screen) => {
     setState(s => ({ ...s, currentScreen: screen }));
@@ -197,7 +212,12 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <AppHeader context={headerContext} onHome={handleHome} />
+      <AppHeader
+        context={headerContext}
+        onHome={handleHome}
+        themeMode={themeMode}
+        onToggleTheme={() => setThemeMode(current => current === 'light' ? 'dark' : 'light')}
+      />
       <div className="app-content">
         <AnimatePresence mode="wait">
           {currentScreen === 'home' && (

@@ -13,25 +13,17 @@ interface PlanningProgressProps {
   currentStep: PlanningStep;
   completedSteps: PlanningStep[];
   onStepClick: (step: PlanningStep) => void;
-  quarter: string;
 }
 
 export function PlanningProgress({
   currentStep,
   completedSteps,
   onStepClick,
-  quarter,
 }: PlanningProgressProps) {
   const currentIdx = STEPS.findIndex(s => s.id === currentStep);
 
   return (
     <div className="planning-progress">
-      {/* Breadcrumb label — fixed width, never changes */}
-      <p className="planning-progress-breadcrumb">
-        {quarter} Planning
-      </p>
-
-      {/* Step dots + connectors */}
       <div className="planning-progress-steps" role="list">
         {STEPS.map((step, i) => {
           const isCompleted = completedSteps.includes(step.id);

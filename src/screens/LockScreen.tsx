@@ -68,7 +68,6 @@ export function LockScreen({ segments, quarter, reasoning, onLocked, onStepClick
           currentStep="lock"
           completedSteps={['context', 'themes', 'allocate', 'review']}
           onStepClick={onStepClick}
-          quarter={quarter}
         />
 
         {/* Bar in card frame */}
