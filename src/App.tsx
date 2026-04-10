@@ -287,7 +287,6 @@ export default function App() {
             <ThemeLandingScreen
               key="theme-landing"
               themes={judgment.themes}
-              quarter={state.nextQuarter}
               onSelectTheme={handleSelectTheme}
             />
           )}

@@ -1,14 +1,22 @@
 import { motion } from 'framer-motion';
+import { AllocationBar } from '../components/AllocationBar';
+import { DEFAULT_COLORS } from '../data/defaults';
 import type { ScoringTheme } from '../types';
 
 interface ThemeLandingScreenProps {
   themes: ScoringTheme[];
-  quarter: string;
   onSelectTheme: (themeId: string) => void;
 }
 
-export function ThemeLandingScreen({ themes, quarter, onSelectTheme }: ThemeLandingScreenProps) {
-  const totalWeeks = themes.reduce((s, t) => s + t.engWeeks, 0);
+export function ThemeLandingScreen({ themes, onSelectTheme }: ThemeLandingScreenProps) {
+  const totalWeeks = themes.reduce((sum, theme) => sum + theme.engWeeks, 0);
+  const allocationSegments = themes.map(theme => ({
+    id: theme.id,
+    name: theme.name,
+    shortName: theme.name,
+    percentage: theme.allocation,
+    color: DEFAULT_COLORS[theme.id] ?? theme.model[0]?.color ?? '#4A6CF7',
+  }));
 
   return (
     <motion.div
@@ -18,21 +26,21 @@ export function ThemeLandingScreen({ themes, quarter, onSelectTheme }: ThemeLand
       exit={{ opacity: 0 }}
     >
       <div className="screen-inner theme-landing-layout">
-        {/* Header */}
-        <div>
-          <p className="screen-section-label">{quarter} Initiative Scoring</p>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginTop: 6 }}>
-            Score &amp; rank initiatives within each theme
-          </h2>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
+        <div className="theme-landing-header">
+          <h2 className="theme-landing-title">Choose a theme to score</h2>
+          <p className="theme-landing-subtitle">
             {totalWeeks} eng-weeks across {themes.length} themes
           </p>
         </div>
 
-        {/* Theme cards */}
+        <div className="theme-allocation-summary">
+          <AllocationBar segments={allocationSegments} compact={true} />
+          <p className="theme-allocation-caption">Current theme allocation</p>
+        </div>
+
         <div className="theme-cards">
-          {themes.map((theme, i) => {
-            const scored = theme.initiatives.filter(ini => ini.status === 'scored').length;
+          {themes.map((theme, index) => {
+            const scored = theme.initiatives.filter(initiative => initiative.status === 'scored').length;
             const total = theme.initiatives.length;
             const progress = total > 0 ? scored / total : 0;
 
@@ -42,41 +50,32 @@ export function ThemeLandingScreen({ themes, quarter, onSelectTheme }: ThemeLand
                 className="theme-card"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06 }}
-                whileTap={{ scale: 0.98 }}
+                transition={{ delay: index * 0.04 }}
+                whileTap={{ scale: 0.985 }}
                 onClick={() => onSelectTheme(theme.id)}
               >
                 <div className="theme-card-header">
                   <span className="theme-card-icon">{theme.icon}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="theme-card-copy">
                     <p className="theme-card-name">{theme.name}</p>
                     <p className="theme-card-meta">
-                      {theme.allocation}% · {theme.engWeeks} eng-wks · {total} initiatives
+                      {theme.allocation}% allocation | {theme.engWeeks} eng-wks | {total} initiatives
                     </p>
                   </div>
-                  <span className="theme-card-arrow">›</span>
+                  <span className="theme-card-arrow">{'>'}</span>
                 </div>
 
-                {/* Progress bar */}
                 <div className="theme-card-progress">
                   <div className="theme-card-progress-bar">
                     <motion.div
                       className="theme-card-progress-fill"
                       initial={{ width: 0 }}
                       animate={{ width: `${progress * 100}%` }}
-                      transition={{ delay: 0.2 + i * 0.06, duration: 0.4 }}
+                      transition={{ delay: 0.15 + index * 0.04, duration: 0.35 }}
                     />
                   </div>
-                  <span className="theme-card-progress-label">
-                    {scored}/{total} scored
-                  </span>
+                  <span className="theme-card-progress-label">{scored}/{total} scored</span>
                 </div>
-
-                {theme.lastScored && (
-                  <p style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
-                    Last scored: {theme.lastScored}
-                  </p>
-                )}
               </motion.button>
             );
           })}

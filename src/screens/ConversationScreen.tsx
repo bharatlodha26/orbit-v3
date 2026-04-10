@@ -107,7 +107,7 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
 
         <div className="conversation-bar-block">
           <AllocationBar segments={state.segments} />
-          <p className="conversation-current-quarter">- {state.currentQuarter} (current) -</p>
+          <p className="conversation-current-quarter">{state.currentQuarter} baseline</p>
         </div>
 
         <AnimatePresence mode="wait">
