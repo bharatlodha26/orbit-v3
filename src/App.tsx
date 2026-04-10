@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import type { AppState, Scenario, Screen, Segment, ThinkingTrailEntry, PlanningStep, ReasoningEntry, JudgmentState, Initiative, ScoringDimension, PlanState, PlanInitiative } from './types';
 
 import { Q2_SEGMENTS } from './data/defaults';
-import { buildThemesFromSegments } from './services/scoringMockApi';
+import { buildThemesFromSegments, autoRateInitiatives } from './services/scoringMockApi';
 import { buildPlanFromJudgment } from './services/planMockApi';
 import { AppHeader } from './components/AppHeader';
 import { HomeScreen } from './screens/HomeScreen';
@@ -178,7 +178,17 @@ export default function App() {
   };
 
   const handleIngestionComplete = () => {
+    setJudgment(j => ({ ...j, themes: autoRateInitiatives(j.themes) }));
     go('theme-landing');
+  };
+
+  const handleReviewAiScores = () => {
+    const target =
+      judgment.themes.find(t => t.initiatives.some(i => i.autoRated)) ??
+      judgment.themes[0];
+    if (!target) return;
+    setJudgment(j => ({ ...j, activeThemeId: target.id, modelConfirmed: true }));
+    go('ranked-review');
   };
 
   const handleSelectTheme = (themeId: string) => {
@@ -344,6 +354,7 @@ export default function App() {
               key="theme-landing"
               themes={judgment.themes}
               onSelectTheme={handleSelectTheme}
+              onReviewAiScores={handleReviewAiScores}
             />
           )}
           {currentScreen === 'scoring-model' && activeTheme && (

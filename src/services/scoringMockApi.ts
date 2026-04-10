@@ -96,6 +96,56 @@ export function buildThemesFromSegments(segments: Segment[]): ScoringTheme[] {
   });
 }
 
+// ── AI pre-scoring from context signals ─────────────────────
+
+const SIGNAL_THEMES = new Set(['enterprise', 'retain']);
+
+const SIGNAL_NL: Record<string, string> = {
+  enterprise: '$250K ARR at risk — enterprise deal blocker, CISO flagged SSO as critical. 3 accounts urgent.',
+  retain:     'Key account churn signal, $180K ARR at risk. Account health dashboard showing red. Urgent fix needed.',
+};
+
+const AI_COVERAGE = 0.6; // pre-score first 60% of initiatives per signal-matched theme
+
+export function autoRateInitiatives(themes: ScoringTheme[]): ScoringTheme[] {
+  return themes.map(theme => {
+    if (!SIGNAL_THEMES.has(theme.id)) return theme;
+
+    const nlInput  = SIGNAL_NL[theme.id];
+    const cutoff   = Math.floor(theme.initiatives.length * AI_COVERAGE);
+    const totalW   = theme.model.reduce((s, d) => s + d.weight, 0);
+
+    const updatedInitiatives = theme.initiatives.map((ini, idx) => {
+      if (idx >= cutoff) return ini;
+
+      const scores    = theme.model.map(dim => inferDimensionScore(nlInput, dim));
+      const composite = Math.round(
+        scores.reduce((sum, sc) => {
+          const dim = theme.model.find(d => d.id === sc.dimensionId);
+          return sum + sc.score * ((dim?.weight ?? 0) / totalW);
+        }, 0) * 10
+      ) / 10;
+
+      const narrative =
+        composite >= 4
+          ? `Pre-scored by AI: directly maps to ${theme.name.toLowerCase()} signal from context scan. High confidence.`
+          : `Pre-scored by AI: moderate match to ${theme.name.toLowerCase()} context signal.`;
+
+      return {
+        ...ini,
+        scores,
+        composite,
+        status:    'scored' as const,
+        autoRated: true,
+        narrative,
+        nlInput,
+      };
+    });
+
+    return { ...theme, initiatives: updatedInitiatives };
+  });
+}
+
 // ── Generate model narrative from weights ────────────────────
 
 export function generateModelNarrative(dimensions: ScoringDimension[]): string {

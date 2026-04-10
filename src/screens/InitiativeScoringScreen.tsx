@@ -12,46 +12,68 @@ interface InitiativeScoringScreenProps {
   onBack: () => void;
 }
 
+const DEFAULT_SCORE = 3;
+
+function compositeLabel(score: number): string {
+  if (score >= 4.5) return 'High priority';
+  if (score >= 3.5) return 'Good priority';
+  if (score >= 2.5) return 'Moderate';
+  return 'Lower priority';
+}
+
+function buildDefaultSliders(model: ScoringDimension[]): Record<string, number> {
+  const defaults: Record<string, number> = {};
+  model.forEach(d => { defaults[d.id] = DEFAULT_SCORE; });
+  return defaults;
+}
+
 function computeComposite(sliderScores: Record<string, number>, model: ScoringDimension[]): number {
   const totalWeight = model.reduce((s, d) => s + d.weight, 0);
   if (totalWeight === 0) return 0;
-  const filled = model.filter(d => sliderScores[d.id] != null);
-  if (filled.length === 0) return 0;
-  const sum = filled.reduce((s, d) => s + sliderScores[d.id] * (d.weight / totalWeight), 0);
+  const sum = model.reduce((s, d) => s + (sliderScores[d.id] ?? DEFAULT_SCORE) * (d.weight / totalWeight), 0);
   return Math.round(sum * 10) / 10;
 }
 
 export function InitiativeScoringScreen({
   theme, onUpdateInitiative, onDone, onBack,
 }: InitiativeScoringScreenProps) {
-  const total          = theme.initiatives.length;
-  const firstUnscored  = theme.initiatives.findIndex(i => i.status !== 'scored');
-  const [currentIdx, setCurrentIdx]     = useState(Math.max(0, firstUnscored));
-  const [sliderScores, setSliderScores] = useState<Record<string, number>>({});
+  const total         = theme.initiatives.length;
+  const firstUnscored = theme.initiatives.findIndex(i => i.status !== 'scored');
+
+  const [currentIdx,   setCurrentIdx]   = useState(Math.max(0, firstUnscored));
+  const [sliderScores, setSliderScores] = useState<Record<string, number>>(buildDefaultSliders(theme.model));
   const [nlInput,      setNlInput]      = useState('');
   const [isScoring,    setIsScoring]    = useState(false);
+  const [slidersOpen,  setSlidersOpen]  = useState(false);
+
   const audio  = useAudio();
   const haptic = useHaptic();
 
-  const initiative  = theme.initiatives[currentIdx];
-  const scored      = theme.initiatives.filter(i => i.status === 'scored').length;
-  const allSlid     = theme.model.every(d => sliderScores[d.id] != null);
-  const composite   = useMemo(() => computeComposite(sliderScores, theme.model), [sliderScores, theme.model]);
-  const hasNl       = nlInput.trim().length > 0;
+  const initiative = theme.initiatives[currentIdx];
+  const scored     = theme.initiatives.filter(i => i.status === 'scored').length;
+  const composite  = useMemo(() => computeComposite(sliderScores, theme.model), [sliderScores, theme.model]);
+  const hasNl      = nlInput.trim().length > 0;
 
-  // Pre-fill when revisiting a scored initiative
+  // Sort model by weight desc for visual hierarchy
+  const sortedModel = useMemo(
+    () => [...theme.model].sort((a, b) => b.weight - a.weight),
+    [theme.model]
+  );
+
+  // Pre-fill when navigating to a scored initiative; default sliders for unscored
   useEffect(() => {
     const ini = theme.initiatives[currentIdx];
     if (!ini) return;
-    if (ini.status === 'scored') {
+    if (ini.status === 'scored' && ini.scores.length > 0) {
       const pre: Record<string, number> = {};
       ini.scores.forEach(sc => { pre[sc.dimensionId] = sc.score; });
       setSliderScores(pre);
       setNlInput(ini.nlInput ?? '');
     } else {
-      setSliderScores({});
+      setSliderScores(buildDefaultSliders(theme.model));
       setNlInput('');
     }
+    setSlidersOpen(false);
   }, [currentIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const advance = useCallback(() => {
@@ -76,15 +98,14 @@ export function InitiativeScoringScreen({
     advance();
   }, [hasNl, nlInput, theme.model, initiative, onUpdateInitiative, advance]);
 
-  // Manual path
+  // Manual path (sliders)
   const handleManualSave = useCallback(() => {
-    if (!allSlid) return;
     const scores: DimensionScore[] = theme.model.map(d => ({
       dimensionId: d.id,
-      score: sliderScores[d.id],
+      score: sliderScores[d.id] ?? DEFAULT_SCORE,
       evidence: 'Manual score',
-      quality: sliderScores[d.id] >= 4 ? 'strong' as const
-             : sliderScores[d.id] >= 3 ? 'soft' as const
+      quality: (sliderScores[d.id] ?? DEFAULT_SCORE) >= 4 ? 'strong' as const
+             : (sliderScores[d.id] ?? DEFAULT_SCORE) >= 3 ? 'soft' as const
              : 'assumption' as const,
     }));
     onUpdateInitiative({
@@ -97,27 +118,20 @@ export function InitiativeScoringScreen({
       status: 'scored',
     });
     advance();
-  }, [allSlid, sliderScores, theme.model, initiative, composite, onUpdateInitiative, advance]);
+  }, [sliderScores, theme.model, initiative, composite, onUpdateInitiative, advance]);
 
   if (!initiative) return null;
-
-  // CTA state: AI takes priority if textarea has content
-  const ctaAi     = hasNl && !isScoring;
-  const ctaManual = !hasNl && allSlid;
-  const ctaEnabled = ctaAi || ctaManual;
 
   const ctaLabel = isScoring
     ? 'Scoring…'
     : hasNl
     ? 'Score with AI →'
-    : allSlid
-    ? 'Save scores →'
-    : 'Describe or score to continue';
+    : 'Looks right → save';
 
   const handleCta = () => {
     if (isScoring) return;
-    if (hasNl) handleAiScore();
-    else if (allSlid) handleManualSave();
+    if (hasNl) { audio.playSave(); haptic.tap(); handleAiScore(); }
+    else        { audio.playSave(); haptic.tap(); handleManualSave(); }
   };
 
   return (
@@ -131,7 +145,10 @@ export function InitiativeScoringScreen({
 
         {/* ── Header ────────────────────────────────────────── */}
         <div className="si-header">
-          <motion.button className="btn-ghost" whileTap={{ scale: 0.95 }} onClick={() => { audio.playNavigate(); haptic.tap(); onBack(); }} style={{ padding: '4px 0', marginBottom: 8 }}>
+          <motion.button className="btn-ghost" whileTap={{ scale: 0.95 }}
+            onClick={() => { audio.playNavigate(); haptic.tap(); onBack(); }}
+            style={{ padding: '4px 0', marginBottom: 8 }}
+          >
             ← Back to model
           </motion.button>
           <div className="si-header-row">
@@ -166,15 +183,16 @@ export function InitiativeScoringScreen({
               <p className="si-initiative-name">{initiative.name}</p>
               <AnimatePresence>
                 {composite > 0 && (
-                  <motion.span
+                  <motion.div
                     key={composite}
                     className="si-composite-live"
                     initial={{ scale: 0.7, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                   >
-                    {composite}
-                  </motion.span>
+                    <span className="si-composite-label">{compositeLabel(composite)}</span>
+                    <span className="si-composite-score">{composite}</span>
+                  </motion.div>
                 )}
               </AnimatePresence>
             </div>
@@ -189,68 +207,97 @@ export function InitiativeScoringScreen({
           <div className="si-describe-block">
             <textarea
               className="text-input si-describe-textarea"
-              placeholder="Describe what makes this initiative important — AI will infer scores&#10;e.g. 3 enterprise accounts blocked, $200k ARR at risk, compliance deadline Q3…"
+              placeholder={`Why should this ship this quarter?\ne.g. $200k ARR at risk, 3 accounts blocked…`}
               value={nlInput}
               onChange={e => setNlInput(e.target.value)}
             />
           </div>
 
-          {/* SECONDARY: sliders */}
+          {/* SECONDARY: sliders — collapsed by default */}
           <div className="si-sliders-block">
-            <p className="si-sliders-label">Or score manually</p>
-            {theme.model.map(dim => {
-              const val = sliderScores[dim.id] ?? 0;
-              return (
-                <div key={dim.id} className="si-slider-row">
-                  <div className="si-slider-meta">
-                    <span className="si-slider-name">{dim.shortName}</span>
-                    <span
-                      className="si-slider-value"
-                      style={{ color: val > 0 ? dim.color : undefined }}
-                    >
-                      {val > 0 ? val : '–'}
-                    </span>
+            <button
+              className="si-sliders-toggle"
+              onClick={() => { audio.playToggle(); setSlidersOpen(o => !o); }}
+            >
+              <span>{slidersOpen ? '▾' : '▸'} Adjust scores manually</span>
+            </button>
+
+            <AnimatePresence>
+              {slidersOpen && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <div className="si-sliders-inner">
+                    {sortedModel.map((dim, dimIdx) => {
+                      const val        = sliderScores[dim.id] ?? DEFAULT_SCORE;
+                      const isPrimary  = dimIdx === 0;
+                      return (
+                        <div key={dim.id} className="si-slider-row">
+                          <div className="si-slider-meta">
+                            <span className={`si-slider-name${isPrimary ? ' si-slider-name--primary' : ''}`}>
+                              {dim.shortName}
+                              {isPrimary && (
+                                <span className="si-slider-weight-badge">{dim.weight}%</span>
+                              )}
+                            </span>
+                            <span className="si-slider-value" style={{ color: dim.color }}>
+                              {val}
+                            </span>
+                          </div>
+                          <div className="si-slider-track-wrap">
+                            <input
+                              type="range"
+                              className="si-slider-input"
+                              min={1} max={5} step={1}
+                              value={val}
+                              style={{ '--dim-color': dim.color } as React.CSSProperties}
+                              onChange={e => {
+                                audio.playSegmentChange(Number(e.target.value), true);
+                                setSliderScores(prev => ({ ...prev, [dim.id]: Number(e.target.value) }));
+                              }}
+                              onMouseDown={() => haptic.grab()}
+                              onMouseUp={() => haptic.release()}
+                            />
+                            <div className="si-slider-pips">
+                              {[1,2,3,4,5].map(n => (
+                                <span
+                                  key={n}
+                                  className="si-slider-pip"
+                                  style={{ background: val >= n ? dim.color : undefined }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="si-slider-track-wrap">
-                    <input
-                      type="range"
-                      className="si-slider-input"
-                      min={1} max={5} step={1}
-                      value={val > 0 ? val : 1}
-                      style={{ '--dim-color': dim.color } as React.CSSProperties}
-                      onChange={e => { audio.playSegmentChange(Number(e.target.value), true); setSliderScores(prev => ({ ...prev, [dim.id]: Number(e.target.value) })); }}
-                      onMouseDown={() => {
-                        haptic.grab();
-                        if (val === 0) setSliderScores(prev => ({ ...prev, [dim.id]: 1 }));
-                      }}
-                      onMouseUp={() => haptic.release()}
-                    />
-                    <div className="si-slider-pips">
-                      {[1,2,3,4,5].map(n => (
-                        <span
-                          key={n}
-                          className="si-slider-pip"
-                          style={{ background: val >= n ? dim.color : undefined }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
         </div>
 
         {/* ── Footer ────────────────────────────────────────── */}
         <div className="si-footer">
-          <motion.button className="si-skip-btn" whileTap={{ scale: 0.95 }} onClick={() => { audio.playTap(); advance(); }}>Skip</motion.button>
+          <motion.button
+            className="si-skip-btn"
+            whileTap={{ scale: 0.95 }}
+            onClick={() => { audio.playTap(); advance(); }}
+          >
+            Score later
+          </motion.button>
           <motion.button
             className="btn-primary si-cta-btn"
-            disabled={!ctaEnabled}
-            style={{ opacity: ctaEnabled ? 1 : 0.35 }}
-            whileTap={ctaEnabled ? { scale: 0.97 } : {}}
-            onClick={() => { if (ctaEnabled) { audio.playSave(); haptic.tap(); handleCta(); } }}
+            disabled={isScoring}
+            style={{ opacity: isScoring ? 0.5 : 1 }}
+            whileTap={!isScoring ? { scale: 0.97 } : {}}
+            onClick={handleCta}
           >
             {ctaLabel}
           </motion.button>

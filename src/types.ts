@@ -123,6 +123,7 @@ export interface Initiative {
   effortWeeks: number;
   status: InitiativeStatus;
   narrative?: string;         // system-generated explanation
+  autoRated?: boolean;        // true when AI pre-scored from context signals
   rank?: number;
   overrideRank?: number;      // PM-set manual override
   overrideReason?: string;
