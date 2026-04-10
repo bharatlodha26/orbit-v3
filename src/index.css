@@ -279,45 +279,34 @@ h1,h2,h3,h4 { font-weight: 700; }
 
 /* ─── Planning progress stepper ──────────────────────────── */
 .planning-progress {
-  display: flex;
   width: 100%;
-  padding-bottom: 2px;
-}
-
-@media (max-height: 860px) {
-  .planning-progress {
-    padding-bottom: 0;
-  }
+  flex-shrink: 0;
 }
 
 .planning-progress-steps {
+  position: relative;
   display: flex;
-  align-items: center;
+  justify-content: space-between;
+  align-items: flex-start;
   width: 100%;
-  gap: 0;
 }
 
-.planning-progress-step-wrapper {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-}
-
-.planning-progress-line {
-  flex: 1;
-  height: 1px;
-  min-width: 18px;
-  margin: 0 8px;
+/* Horizontal track: absolutely positioned at the vertical center of the dot */
+.planning-progress-steps::before {
+  content: '';
+  position: absolute;
+  /* dot is 8px tall → center at 4px → midpoint of 1.5px track ≈ top: 3.25px */
+  top: 3px;
+  left: 12px;
+  right: 12px;
+  height: 1.5px;
   background: var(--border);
-  transition: background 0.3s;
-}
-
-.planning-progress-line[data-active] {
-  background: var(--accent);
+  z-index: 0;
 }
 
 .planning-progress-step {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -325,9 +314,7 @@ h1,h2,h3,h4 { font-weight: 700; }
   background: none;
   border: none;
   cursor: default;
-  min-width: 62px;
   padding: 0 4px;
-  flex-shrink: 0;
 }
 
 .planning-progress-step[data-state='completed'] {
@@ -336,16 +323,19 @@ h1,h2,h3,h4 { font-weight: 700; }
 
 .planning-progress-dot {
   display: block;
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   border: 1.5px solid var(--border);
-  background: transparent;
+  /* filled with the page bg so it masks the track line behind it */
+  background: var(--bg);
+  transition: border-color 0.2s, background 0.2s;
 }
 
 .planning-progress-step[data-state='current'] .planning-progress-dot {
   border-color: var(--accent);
   background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .planning-progress-step[data-state='completed'] .planning-progress-dot {
@@ -358,7 +348,7 @@ h1,h2,h3,h4 { font-weight: 700; }
   color: var(--text-tertiary);
   font-weight: 500;
   white-space: nowrap;
-  letter-spacing: 0.12px;
+  letter-spacing: 0.1px;
   text-align: center;
 }
 
@@ -372,16 +362,6 @@ h1,h2,h3,h4 { font-weight: 700; }
 }
 
 @media (max-width: 767px) {
-  .planning-progress-line {
-    margin: 0 4px;
-    min-width: 10px;
-  }
-
-  .planning-progress-step {
-    min-width: 48px;
-    padding: 0 2px;
-  }
-
   .planning-progress-label {
     font-size: 9px;
   }
@@ -702,200 +682,143 @@ h1,h2,h3,h4 { font-weight: 700; }
 }
 
 /* ─── Conversation screen ────────────────────────────────── */
-.conversation-screen-inner {
-  gap: var(--screen-gap);
+
+/* Layout: fixed header elements + scrollable chips + sticky input */
+.conv-layout {
+  gap: 0;
+  overflow: hidden;
+  padding-bottom: 0;
 }
 
-.conversation-bar-block {
+/* Bar block: context, intentionally compact */
+.conv-bar-block {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
+  padding: 14px 0 2px;
 }
 
-.conversation-bar-block .allocation-bar {
-  height: 64px !important;
-  border-radius: 14px !important;
+.conv-bar-block .allocation-bar {
+  height: 52px !important;
+  border-radius: 12px !important;
 }
 
-.conversation-current-quarter {
+.conv-quarter-label {
   font-size: 10px;
   color: var(--text-tertiary);
-  text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  text-align: center;
 }
 
-.conversation-turn-card {
+/* Question block: the hero element */
+.conv-question-block {
+  flex-shrink: 0;
+  padding: 20px 0 16px;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+}
+
+.conv-question-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  letter-spacing: -0.2px;
+}
+
+.conv-loading-text {
+  font-size: 14px;
+  color: var(--text-tertiary);
+}
+
+/* Chips: scrollable, takes remaining vertical space */
+.conv-chips-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 0; /* required for flex overflow */
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.conv-chips-scroll::-webkit-scrollbar { display: none; }
+
+.conv-chip {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 16px;
   background: var(--surface);
-  border-radius: 16px;
-  padding: calc(var(--question-card-padding) + 2px);
   border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: left;
+  line-height: 1.4;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  flex-shrink: 0;
+}
+.conv-chip:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.conv-chip:active { opacity: 0.85; }
+
+/* Input: always visible at bottom */
+.conv-input-row {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 0 4px;
+  border-top: 1px solid var(--border);
 }
 
-.conversation-turn-card-loading {
+.conv-input {
+  flex: 1;
+  height: 44px;
+}
+
+.conv-submit-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: var(--accent);
+  color: white;
+  border-radius: 10px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+}
+.conv-submit-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+.conv-submit-btn:not(:disabled):hover { opacity: 0.9; }
+
+/* Compact on short viewports */
+@media (max-height: 860px) {
+  .conv-bar-block { padding-top: 10px; }
+  .conv-bar-block .allocation-bar { height: 44px !important; }
+  .conv-question-block { padding: 14px 0 10px; min-height: 56px; }
+  .conv-question-text { font-size: 18px; }
+  .conv-chips-scroll { gap: 5px; }
+  .conv-chip { min-height: 42px; font-size: 13px; }
+}
+
+/* Legacy class aliases (used by other screens) — kept for compat */
+.conversation-screen-inner { gap: var(--screen-gap); }
+.conversation-loading {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 60px;
-}
-
-.conversation-turn-question {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.32;
-}
-
-.conversation-context-eyebrow,
-.conversation-section-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.conversation-context-eyebrow {
-  display: inline-block;
-  margin-bottom: 10px;
-  color: var(--accent);
-}
-
-.conversation-chip-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.conversation-input-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.conversation-question-surface {
-  background: linear-gradient(180deg, var(--accent-soft), transparent 80%), var(--surface);
-  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
-  box-shadow: 0 0 0 1px rgba(125, 162, 255, 0.06), 0 10px 24px rgba(0, 0, 0, 0.12);
-}
-
-.conversation-section-label {
-  color: var(--text-tertiary);
-  margin-bottom: 2px;
-}
-
-.context-chip {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  font-weight: 600;
-  box-shadow: none;
-}
-
-.context-chip:hover {
-  background: var(--surface-secondary);
-  color: var(--text-primary);
-  border-color: var(--accent);
-}
-
-.context-input-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-}
-
-.conversation-input-shell {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.context-input-shell {
-  padding: 8px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  background: var(--surface-secondary);
-}
-
-.context-input-shell .text-input {
-  background: var(--surface);
-  border-color: transparent;
-  box-shadow: none;
-}
-
-.context-submit-btn {
-  border-radius: 12px;
-  opacity: 0.85;
-}
-
-.conversation-columns {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  flex: 1;
-}
-
-.conversation-left {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-}
-
-.conversation-right {
-  /* hidden on mobile, shown on desktop */
-}
-
-.conversation-dots {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-}
-
-.conversation-bar-mobile {
-  /* shown on mobile */
-}
-
-.conversation-bar-label {
-  font-size: 11px;
-  color: var(--text-tertiary);
-  margin-top: 6px;
-  text-align: center;
-}
-
-.conversation-question-card {
-  background: var(--surface);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  border: 1px solid var(--border);
-}
-
-.conversation-question-text {
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.4;
-}
-
-@media (max-height: 860px) {
-  .conversation-turn-question,
-  .conversation-question-text {
-    font-size: 15px;
-  }
-
-  .conversation-bar-block .allocation-bar {
-    height: 56px !important;
-  }
-
-  .conversation-chip-list {
-    gap: 6px;
-  }
-
-  .conversation-chip-list .chip {
-    font-size: 13px;
-    line-height: 1.3;
-  }
 }
 
 .conversation-loading {

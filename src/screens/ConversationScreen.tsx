@@ -24,7 +24,7 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
   const [currentTurnData, setCurrentTurnData] = useState<GeneratedTurn | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const audio = useAudio();
+  const audio  = useAudio();
   const haptic = useHaptic();
 
   const loadTurn = useCallback(async (
@@ -61,34 +61,27 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
     const newTrail = [...trail, entry];
     setTrail(newTrail);
 
-    const newHistory: ConversationHistory[] = [
-      ...history,
-      { question: currentTurnData.question, answer },
-    ];
+    const newHistory: ConversationHistory[] = [...history, { question: currentTurnData.question, answer }];
     setHistory(newHistory);
     setInputText('');
 
     const nextTurn = turn + 1;
-
     if (nextTurn >= TOTAL_TURNS) {
-      setTimeout(() => {
-        audio.playTransition();
-        onComplete(newTrail);
-      }, 400);
+      setTimeout(() => { audio.playTransition(); onComplete(newTrail); }, 400);
       return;
     }
 
     setTimeout(async () => {
       setTurn(nextTurn);
-      setQuestionKey(key => key + 1);
+      setQuestionKey(k => k + 1);
       await loadTurn(nextTurn, newHistory, newSegments);
     }, 350);
   }, [currentTurnData, state.segments, onSegmentsChange, trail, history, turn, audio, haptic, loadTurn, onComplete]);
 
-  const handleChip = (chip: string) => submitAnswer(chip);
+  const handleChip   = (chip: string) => submitAnswer(chip);
   const handleSubmit = () => submitAnswer(inputText);
 
-  const currentStep: PlanningStep = turn <= 1 ? 'context' : 'themes';
+  const currentStep: PlanningStep    = turn <= 1 ? 'context' : 'themes';
   const completedSteps: PlanningStep[] = turn > 1 ? ['context'] : [];
 
   return (
@@ -98,68 +91,71 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <div className="screen-inner conversation-screen-inner">
+      <div className="screen-inner conv-layout">
+
+        {/* ── Breadcrumbs ────────────────────────────────── */}
         <PlanningProgress
           currentStep={currentStep}
           completedSteps={completedSteps}
           onStepClick={onStepClick}
         />
 
-        <div className="conversation-bar-block">
+        {/* ── Allocation bar (context, not focus) ────────── */}
+        <div className="conv-bar-block">
           <AllocationBar segments={state.segments} />
-          <p className="conversation-current-quarter">{state.currentQuarter} baseline</p>
+          <p className="conv-quarter-label">{state.currentQuarter} baseline</p>
         </div>
 
+        {/* ── Question (hero) ────────────────────────────── */}
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div
               key="loading"
+              className="conv-question-block"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="conversation-turn-card conversation-turn-card-loading"
             >
               <motion.span
+                className="conv-loading-text"
                 animate={{ opacity: [0.3, 1, 0.3] }}
                 transition={{ repeat: Infinity, duration: 1.2 }}
-                style={{ fontSize: 14, color: 'var(--text-tertiary)' }}
               >
-                Thinking...
+                Thinking…
               </motion.span>
             </motion.div>
           ) : currentTurnData && (
             <motion.div
               key={questionKey}
-              initial={{ opacity: 0, y: 16 }}
+              className="conv-question-block"
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
+              exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
-              className="conversation-turn-card conversation-question-surface"
             >
-              <span className="conversation-context-eyebrow">Question</span>
-              <p className="conversation-turn-question">{currentTurnData.question}</p>
+              <p className="conv-question-text">{currentTurnData.question}</p>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* ── Chips (scrollable middle zone) ─────────────── */}
         {!isLoading && currentTurnData && (
           <AnimatePresence mode="wait">
             <motion.div
               key={`chips-${questionKey}`}
+              className="conv-chips-scroll"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="conversation-chip-list"
             >
-              <p className="conversation-section-label">Suggested responses</p>
               {currentTurnData.chips.map((chip, i) => (
                 <motion.button
                   key={chip}
-                  className="chip context-chip"
-                  initial={{ opacity: 0, x: -8 }}
+                  className="conv-chip"
+                  initial={{ opacity: 0, x: -6 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  whileTap={{ scale: 0.97 }}
+                  transition={{ delay: i * 0.04 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => handleChip(chip)}
                 >
                   {chip}
@@ -169,28 +165,28 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
           </AnimatePresence>
         )}
 
+        {/* ── Input (always at bottom) ────────────────────── */}
         {!isLoading && (
-          <div className="conversation-input-row context-input-wrap">
-            <p className="conversation-section-label">Custom response</p>
-            <div className="conversation-input-shell context-input-shell">
-              <input
-                className="text-input"
-                placeholder="Or type your own..."
-                value={inputText}
-                onChange={e => setInputText(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-              />
-              <motion.button
-                className="btn-icon context-submit-btn"
-                whileTap={{ scale: 0.9 }}
-                onClick={() => { audio.playChipSelect(); handleSubmit(); }}
-                disabled={!inputText.trim()}
-              >
-                {'->'}
-              </motion.button>
-            </div>
+          <div className="conv-input-row">
+            <input
+              className="text-input conv-input"
+              placeholder="Or type your own…"
+              value={inputText}
+              onChange={e => setInputText(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            />
+            <motion.button
+              className="conv-submit-btn"
+              whileTap={{ scale: 0.9 }}
+              onClick={() => { audio.playChipSelect(); handleSubmit(); }}
+              disabled={!inputText.trim()}
+              aria-label="Submit"
+            >
+              →
+            </motion.button>
           </div>
         )}
+
       </div>
     </motion.div>
   );
