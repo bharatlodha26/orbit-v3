@@ -806,3 +806,476 @@ h1,h2,h3,h4 { font-weight: 700; }
   font-weight: 700;
   color: var(--text-primary);
 }
+
+/* ─── Theme Landing (Screen 3.0) ────────────────────────── */
+.theme-landing-layout {
+  /* inherits screen-inner */
+}
+
+.theme-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+.theme-card:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.theme-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-card-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.theme-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.theme-card-meta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.theme-card-arrow {
+  font-size: 20px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.theme-card-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-card-progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--surface-secondary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.theme-card-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.theme-card-progress-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .theme-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+}
+
+/* ─── Scoring Model (Screen 3.1) ────────────────────────── */
+.scoring-model-layout {
+  /* inherits screen-inner */
+}
+
+.scoring-model-narrative {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.scoring-weight-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.scoring-weight-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scoring-weight-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scoring-weight-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.scoring-weight-pct {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 36px;
+  text-align: right;
+}
+
+.scoring-weight-track {
+  position: relative;
+  height: 24px;
+  background: var(--surface-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.scoring-weight-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 6px;
+  opacity: 0.85;
+}
+
+.scoring-weight-handle {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 16px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.scoring-changes {
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.scoring-change-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.scoring-change-item:last-child {
+  border-bottom: none;
+}
+
+/* ─── Initiative Scoring (Screen 3.2) ───────────────────── */
+.initiative-scoring-layout {
+  /* inherits screen-inner */
+}
+
+.initiative-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.initiative-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.initiative-card-expanded {
+  border-color: var(--accent);
+}
+
+.initiative-card-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 14px 16px;
+  text-align: left;
+  gap: 12px;
+}
+
+.initiative-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.initiative-card-meta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.initiative-score-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 24px;
+  padding: 0 6px;
+  background: var(--accent);
+  color: white;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.initiative-unscored-badge {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.initiative-card-body {
+  padding: 0 16px 16px;
+  overflow: hidden;
+}
+
+.initiative-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.initiative-score-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.initiative-score-dim {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 80px;
+}
+
+.initiative-score-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.initiative-score-dim-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.initiative-score-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--surface-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.initiative-score-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.initiative-score-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 28px;
+  text-align: right;
+}
+
+.initiative-score-quality {
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.initiative-score-evidence {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  flex-basis: 100%;
+  padding-left: 86px;
+  margin-top: -4px;
+}
+
+.initiative-narrative {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-style: italic;
+  line-height: 1.4;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+/* ─── Ranked Review (Screen 3.3) ────────────────────────── */
+.ranked-review-layout {
+  /* inherits screen-inner */
+}
+
+.ranked-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.capacity-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.capacity-line-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--warning);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  background: var(--warning-bg);
+  border-radius: 4px;
+}
+
+.ranked-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: opacity 0.2s;
+}
+
+.ranked-card-below {
+  opacity: 0.55;
+}
+
+.ranked-card-close-call {
+  border-color: var(--warning);
+  background: var(--warning-bg);
+  opacity: 1;
+}
+
+.ranked-card-rank {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+
+.ranked-card-rank-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.ranked-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ranked-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ranked-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ranked-card-composite {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.ranked-card-meta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.ranked-card-close-call-label {
+  font-size: 11px;
+  color: var(--warning);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.ranked-override-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+/* ─── Share & Export (Screen 3.4) ────────────────────────── */
+.share-export-layout {
+  align-items: center;
+}
+
+.export-theme-summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.export-theme-card {
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+@media (min-width: 768px) {
+  .export-theme-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

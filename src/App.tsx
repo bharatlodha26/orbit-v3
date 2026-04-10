@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import type { AppState, Scenario, Screen, Segment, ThinkingTrailEntry, PlanningStep, ReasoningEntry } from './types';
+import type { AppState, Scenario, Screen, Segment, ThinkingTrailEntry, PlanningStep, ReasoningEntry, JudgmentState, Initiative, ScoringDimension } from './types';
 
 import { Q2_SEGMENTS } from './data/defaults';
+import { buildThemesFromSegments } from './services/scoringMockApi';
 import { AppHeader } from './components/AppHeader';
 import { HomeScreen } from './screens/HomeScreen';
 import { ConversationScreen } from './screens/ConversationScreen';
@@ -11,6 +12,11 @@ import { ScenarioComparison } from './screens/ScenarioComparison';
 import { StakeholderScreen } from './screens/StakeholderScreen';
 import { LockScreen } from './screens/LockScreen';
 import { PostLockScreen } from './screens/PostLockScreen';
+import { ThemeLandingScreen } from './screens/ThemeLandingScreen';
+import { ScoringModelScreen } from './screens/ScoringModelScreen';
+import { InitiativeScoringScreen } from './screens/InitiativeScoringScreen';
+import { RankedReviewScreen } from './screens/RankedReviewScreen';
+import { ShareExportScreen } from './screens/ShareExportScreen';
 import './index.css';
 
 const INITIAL_STATE: AppState = {
@@ -32,14 +38,19 @@ const INITIAL_STATE: AppState = {
 // Short context labels — avoid long text that stretches the breadcrumb
 function getHeaderContext(screen: Screen, nextQuarter: string): string {
   switch (screen) {
-    case 'home':         return 'Dashboard';
-    case 'conversation': return `${nextQuarter} Planning`;
-    case 'proposal':     return `${nextQuarter} Planning`;
-    case 'scenarios':    return `${nextQuarter} Scenarios`;
-    case 'stakeholder':  return `${nextQuarter} Planning`;
-    case 'lock':         return `${nextQuarter} Lock`;
-    case 'post-lock':    return `${nextQuarter} Locked ✓`;
-    default:             return 'Compass';
+    case 'home':               return 'Dashboard';
+    case 'conversation':       return `${nextQuarter} Planning`;
+    case 'proposal':           return `${nextQuarter} Planning`;
+    case 'scenarios':          return `${nextQuarter} Scenarios`;
+    case 'stakeholder':        return `${nextQuarter} Planning`;
+    case 'lock':               return `${nextQuarter} Lock`;
+    case 'post-lock':          return `${nextQuarter} Locked ✓`;
+    case 'theme-landing':      return `${nextQuarter} Scoring`;
+    case 'scoring-model':      return `${nextQuarter} Scoring Model`;
+    case 'initiative-scoring': return `${nextQuarter} Initiative Scoring`;
+    case 'ranked-review':      return `${nextQuarter} Ranked Review`;
+    case 'share-export':       return `${nextQuarter} Export`;
+    default:                   return 'Compass';
   }
 }
 
@@ -58,6 +69,11 @@ export default function App() {
   const [workingSegments, setWorkingSegments] = useState<Segment[]>([...Q2_SEGMENTS]);
   const [prevSegments] = useState<Segment[]>([...Q2_SEGMENTS]);
   const [reasoning, setReasoning] = useState<ReasoningEntry[]>([]);
+  const [judgment, setJudgment] = useState<JudgmentState>({
+    themes: [],
+    activeThemeId: null,
+    modelConfirmed: false,
+  });
 
   const go = useCallback((screen: Screen) => {
     setState(s => ({ ...s, currentScreen: screen }));
@@ -122,6 +138,59 @@ export default function App() {
       go(stepToScreen(step));
     }
   };
+
+  // ── Judgment Structurer handlers ──────────────────────────
+
+  const handleStartScoring = () => {
+    const themes = buildThemesFromSegments(workingSegments);
+    setJudgment({ themes, activeThemeId: null, modelConfirmed: false });
+    go('theme-landing');
+  };
+
+  const handleSelectTheme = (themeId: string) => {
+    setJudgment(j => ({ ...j, activeThemeId: themeId, modelConfirmed: false }));
+    go('scoring-model');
+  };
+
+  const handleModelConfirm = (model: ScoringDimension[], narrative: string) => {
+    setJudgment(j => ({
+      ...j,
+      modelConfirmed: true,
+      themes: j.themes.map(t =>
+        t.id === j.activeThemeId ? { ...t, model: model, modelNarrative: narrative } : t
+      ),
+    }));
+    go('initiative-scoring');
+  };
+
+  const handleUpdateInitiative = (updated: Initiative) => {
+    setJudgment(j => ({
+      ...j,
+      themes: j.themes.map(t =>
+        t.id === j.activeThemeId
+          ? { ...t, initiatives: t.initiatives.map(ini => ini.id === updated.id ? updated : ini) }
+          : t
+      ),
+    }));
+  };
+
+  const handleOverrideRank = (initiativeId: string, newRank: number, reason: string) => {
+    setJudgment(j => ({
+      ...j,
+      themes: j.themes.map(t =>
+        t.id === j.activeThemeId
+          ? {
+              ...t,
+              initiatives: t.initiatives.map(ini =>
+                ini.id === initiativeId ? { ...ini, overrideRank: newRank, overrideReason: reason } : ini
+              ),
+            }
+          : t
+      ),
+    }));
+  };
+
+  const activeTheme = judgment.themes.find(t => t.id === judgment.activeThemeId) ?? null;
 
   const currentScreen = state.currentScreen;
   const headerContext = getHeaderContext(currentScreen, state.nextQuarter);
@@ -190,6 +259,50 @@ export default function App() {
               thinkingTrail={state.thinkingTrail}
               reasoning={reasoning}
               onStakeholderLoop={() => go('stakeholder')}
+              onHome={handleHome}
+              onStartScoring={handleStartScoring}
+            />
+          )}
+          {currentScreen === 'theme-landing' && (
+            <ThemeLandingScreen
+              key="theme-landing"
+              themes={judgment.themes}
+              quarter={state.nextQuarter}
+              onSelectTheme={handleSelectTheme}
+            />
+          )}
+          {currentScreen === 'scoring-model' && activeTheme && (
+            <ScoringModelScreen
+              key={`scoring-model-${activeTheme.id}`}
+              theme={activeTheme}
+              onConfirm={handleModelConfirm}
+              onBack={() => go('theme-landing')}
+            />
+          )}
+          {currentScreen === 'initiative-scoring' && activeTheme && (
+            <InitiativeScoringScreen
+              key={`initiative-scoring-${activeTheme.id}`}
+              theme={activeTheme}
+              onUpdateInitiative={handleUpdateInitiative}
+              onDone={() => go('ranked-review')}
+              onBack={() => go('scoring-model')}
+            />
+          )}
+          {currentScreen === 'ranked-review' && activeTheme && (
+            <RankedReviewScreen
+              key={`ranked-review-${activeTheme.id}`}
+              theme={activeTheme}
+              onOverride={handleOverrideRank}
+              onDone={() => go('share-export')}
+              onBack={() => go('initiative-scoring')}
+            />
+          )}
+          {currentScreen === 'share-export' && (
+            <ShareExportScreen
+              key="share-export"
+              themes={judgment.themes}
+              quarter={state.nextQuarter}
+              onBackToThemes={() => go('theme-landing')}
               onHome={handleHome}
             />
           )}

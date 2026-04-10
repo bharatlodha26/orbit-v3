@@ -9,6 +9,7 @@ interface PostLockScreenProps {
   reasoning: ReasoningEntry[];
   onStakeholderLoop: () => void;
   onHome: () => void;
+  onStartScoring: () => void;
 }
 
 interface ActionItem {
@@ -18,7 +19,7 @@ interface ActionItem {
   primary?: boolean;
 }
 
-export function PostLockScreen({ segments, quarter, thinkingTrail, reasoning, onStakeholderLoop, onHome }: PostLockScreenProps) {
+export function PostLockScreen({ segments, quarter, thinkingTrail, reasoning, onStakeholderLoop, onHome, onStartScoring }: PostLockScreenProps) {
   const narrative = generateNarrative(segments);
   const notList = getNotList(segments);
 
@@ -75,7 +76,7 @@ export function PostLockScreen({ segments, quarter, thinkingTrail, reasoning, on
     { label: 'Share as link', icon: '↗', onClick: handleShare, primary: true },
     { label: 'Download one-pager', icon: '↓', onClick: handleDownload },
     { label: 'View thinking trail', icon: '⌛', onClick: handleViewTrail },
-    { label: 'Next: Score initiatives within each theme →', icon: '⬡', onClick: onHome },
+    { label: 'Next: Score initiatives within each theme →', icon: '⬡', onClick: onStartScoring, primary: false },
   ];
 
   return (

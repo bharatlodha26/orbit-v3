@@ -64,7 +64,6 @@ export function ProposalScreen({
           completedSteps={['context', 'themes']}
           onStepClick={onStepClick}
           quarter={state.nextQuarter}
-          stepLabel="Allocation"
         />
 
         {/* Header */}

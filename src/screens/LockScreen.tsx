@@ -69,7 +69,6 @@ export function LockScreen({ segments, quarter, reasoning, onLocked, onStepClick
           completedSteps={['context', 'themes', 'allocate', 'review']}
           onStepClick={onStepClick}
           quarter={quarter}
-          stepLabel="Lock Allocation"
         />
 
         {/* Bar in card frame */}

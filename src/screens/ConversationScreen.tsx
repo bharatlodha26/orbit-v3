@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AllocationBar } from '../components/AllocationBar';
 import { PlanningProgress } from '../components/PlanningProgress';
 import type { AppState, ThinkingTrailEntry, PlanningStep } from '../types';
-import { getConversationTurns } from '../data/defaults';
+import { generateNextTurn, TOTAL_TURNS } from '../services/mockApi';
+import type { GeneratedTurn, ConversationHistory } from '../services/mockApi';
 import { useAudio } from '../hooks/useAudio';
 import { useHaptic } from '../hooks/useHaptic';
 
@@ -19,19 +20,12 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
   const [inputText, setInputText] = useState('');
   const [questionKey, setQuestionKey] = useState(0);
   const [trail, setTrail] = useState<ThinkingTrailEntry[]>([]);
-  const [accReasoning, setAccReasoning] = useState<ReasoningEntry[]>([]);
   const [history, setHistory] = useState<ConversationHistory[]>([]);
   const [currentTurnData, setCurrentTurnData] = useState<GeneratedTurn | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const audio = useAudio();
   const haptic = useHaptic();
-
-  // Load first turn on mount
-  useEffect(() => {
-    loadTurn(0, [], state.segments);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const loadTurn = useCallback(async (
     turnIndex: number,
@@ -44,13 +38,18 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
     setIsLoading(false);
   }, []);
 
+  useEffect(() => {
+    loadTurn(0, [], state.segments);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const submitAnswer = useCallback(async (answer: string) => {
     if (!answer.trim() || !currentTurnData) return;
 
     haptic.tap();
-    audio.playChipSelect(); // light 'tick' for chip selections / confirmations
+    audio.playChipSelect();
 
-    const newSegments = currentTurn.barUpdateFn(state.segments, answer);
+    const newSegments = currentTurnData.barUpdateFn(state.segments, answer);
     onSegmentsChange(newSegments);
 
     const entry: ThinkingTrailEntry = {
@@ -58,7 +57,6 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
       question: currentTurnData.question,
       answerText: answer,
       barStateSnapshot: newSegments,
-      reasoning: newReasoning,
     };
     const newTrail = [...trail, entry];
     setTrail(newTrail);
@@ -74,19 +72,18 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
 
     if (nextTurn >= TOTAL_TURNS) {
       setTimeout(() => {
-        audio.playTransition(); // rising notes = progress
+        audio.playTransition();
         onComplete(newTrail);
       }, 400);
       return;
     }
 
-    // Animate question out, then load next turn
     setTimeout(async () => {
       setTurn(nextTurn);
       setQuestionKey(k => k + 1);
       await loadTurn(nextTurn, newHistory, newSegments);
     }, 350);
-  }, [currentTurnData, state.segments, onSegmentsChange, accReasoning, trail, history, turn, audio, haptic, loadTurn, onComplete]);
+  }, [currentTurnData, state.segments, onSegmentsChange, trail, history, turn, audio, haptic, loadTurn, onComplete]);
 
   const handleChip = (chip: string) => submitAnswer(chip);
   const handleSubmit = () => submitAnswer(inputText);
@@ -120,7 +117,7 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
 
         {/* Progress dots */}
         <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-          {turns.map((_, i) => (
+          {Array.from({ length: TOTAL_TURNS }).map((_, i) => (
             <div
               key={i}
               style={{
@@ -134,84 +131,93 @@ export function ConversationScreen({ state, onSegmentsChange, onComplete, onStep
 
         {/* Question */}
         <AnimatePresence mode="wait">
-          <motion.div
-            key={questionKey}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.2 }}
-            style={{
-              background: 'var(--surface)',
-              borderRadius: 12,
-              padding: '20px',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            <p style={{ fontSize: 17, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4 }}>
-              {currentTurn.question}
-            </p>
-          </motion.div>
+          {isLoading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                background: 'var(--surface)', borderRadius: 12, padding: '20px',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 60,
+              }}
+            >
+              <motion.span
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ repeat: Infinity, duration: 1.2 }}
+                style={{ fontSize: 14, color: 'var(--text-tertiary)' }}
+              >
+                Thinking…
+              </motion.span>
+            </motion.div>
+          ) : currentTurnData && (
+            <motion.div
+              key={questionKey}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                background: 'var(--surface)', borderRadius: 12, padding: '20px',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid var(--border)',
+              }}
+            >
+              <p style={{ fontSize: 17, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                {currentTurnData.question}
+              </p>
+            </motion.div>
+          )}
         </AnimatePresence>
 
         {/* Suggestion chips */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`chips-${questionKey}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
-          >
-            {currentTurn.chips.map((chip, i) => (
-              <motion.button
-                key={chip}
-                className="chip"
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => handleChip(chip)}
-              >
-                {chip}
-              </motion.button>
-            ))}
-          </motion.div>
-        </AnimatePresence>
+        {!isLoading && currentTurnData && (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`chips-${questionKey}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+            >
+              {currentTurnData.chips.map((chip, i) => (
+                <motion.button
+                  key={chip}
+                  className="chip"
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleChip(chip)}
+                >
+                  {chip}
+                </motion.button>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        )}
 
         {/* Text input */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
-            className="text-input"
-            placeholder="Or type your own..."
-            value={inputText}
-            onChange={e => setInputText(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-          />
-          <motion.button
-            className="btn-icon"
-            whileTap={{ scale: 0.9 }}
-            onClick={() => { audio.playChipSelect(); handleSubmit(); }}
-            disabled={!inputText.trim()}
-          >
-            ➤
-          </motion.button>
-        </div>
+        {!isLoading && (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              className="text-input"
+              placeholder="Or type your own..."
+              value={inputText}
+              onChange={e => setInputText(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            />
+            <motion.button
+              className="btn-icon"
+              whileTap={{ scale: 0.9 }}
+              onClick={() => { audio.playChipSelect(); handleSubmit(); }}
+              disabled={!inputText.trim()}
+            >
+              ➤
+            </motion.button>
+          </div>
+        )}
       </div>
     </motion.div>
   );
-}
-
-// Merge new reasoning entries into accumulated reasoning
-function mergeReasoning(acc: ReasoningEntry[], incoming: ReasoningEntry[]): ReasoningEntry[] {
-  const result = [...acc];
-  incoming.forEach(entry => {
-    const existing = result.find(r => r.themeId === entry.themeId);
-    if (existing) {
-      existing.bullets = [...existing.bullets, ...entry.bullets];
-    } else {
-      result.push({ ...entry });
-    }
-  });
-  return result;
 }
