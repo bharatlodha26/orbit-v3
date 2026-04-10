@@ -56,6 +56,7 @@ export type Screen =
   | 'stakeholder'
   | 'lock'
   | 'post-lock'
+  | 'context-ingestion'
   | 'theme-landing'
   | 'scoring-model'
   | 'initiative-scoring'

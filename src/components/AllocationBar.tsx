@@ -7,6 +7,8 @@ import { useAudio } from '../hooks/useAudio';
 interface AllocationBarProps {
   segments: Segment[];
   onSegmentsChange?: (segments: Segment[]) => void;
+  onDragStart?: (leftId: string, rightId: string) => void;
+  onDragEnd?: () => void;
   interactive?: boolean;
   locked?: boolean;
   showDeltas?: boolean;
@@ -17,6 +19,8 @@ interface AllocationBarProps {
 export function AllocationBar({
   segments,
   onSegmentsChange,
+  onDragStart,
+  onDragEnd,
   interactive = false,
   locked = false,
   showDeltas = false,
@@ -46,7 +50,8 @@ export function AllocationBar({
     };
     setActiveHandle(handleIndex);
     haptic.grab();
-  }, [interactive, locked, segments, haptic]);
+    onDragStart?.(segments[handleIndex].id, segments[handleIndex + 1].id);
+  }, [interactive, locked, segments, haptic, onDragStart]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!draggingRef.current || !barRef.current || !onSegmentsChange) return;
@@ -90,8 +95,9 @@ export function AllocationBar({
       haptic.release();
       draggingRef.current = null;
       setActiveHandle(null);
+      onDragEnd?.();
     }
-  }, [haptic]);
+  }, [haptic, onDragEnd]);
 
   const barHeight: number | string = compact ? 48 : 'var(--allocation-bar-height)';
 

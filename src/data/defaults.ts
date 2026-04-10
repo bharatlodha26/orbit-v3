@@ -51,23 +51,52 @@ export function generateNarrative(segments: Segment[]): string {
   return `A balanced bet across ${top.name.toLowerCase()} and ${second?.name?.toLowerCase() ?? 'growth'}.`;
 }
 
-/** Generate the single biggest trade-off sentence for the proposal screen. */
-export function generateTradeoff(segments: Segment[], prevSegments: Segment[]): string {
+/** Two-line insight for the proposal screen (no quotes). */
+export function generateProposalInsight(segments: Segment[]): { headline: string; subtitle: string } {
+  const sorted = [...segments].sort((a, b) => b.percentage - a.percentage);
+  const top = sorted[0];
+  const bottom = sorted[sorted.length - 1];
+  if (!top) return { headline: 'A balanced quarter.', subtitle: 'Resources spread evenly.' };
+  if (top.percentage >= 55) return {
+    headline: `This is an all-in ${top.name.toLowerCase()} quarter.`,
+    subtitle: 'Everything else is deprioritised.',
+  };
+  if (top.percentage >= 40) return {
+    headline: `This is a ${top.name.toLowerCase()} quarter.`,
+    subtitle: `${bottom?.name ?? 'Growth'} takes a back seat.`,
+  };
+  if (top.percentage >= 30) return {
+    headline: `This is a ${top.name.toLowerCase()} quarter.`,
+    subtitle: `${sorted[1]?.name ?? 'Other themes'} stays close behind.`,
+  };
+  return {
+    headline: 'A balanced quarter.',
+    subtitle: 'No single theme dominates.',
+  };
+}
+
+/** Positive-framed tradeoff callout for the proposal screen. */
+export function generateTradeoff(segments: Segment[], prevSegments: Segment[]): { main: string; sub: string } {
   const changes = segments.map(s => {
     const prev = prevSegments.find(p => p.id === s.id);
     return { ...s, delta: prev ? s.percentage - prev.percentage : 0 };
   }).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
 
   const biggest = changes[0];
-  if (!biggest || biggest.delta === 0) return 'No major trade-offs from last quarter.';
-  if (biggest.delta < -10) {
-    return `${biggest.name} dropped ${Math.abs(biggest.delta)} points. Recoverable next quarter if priorities ship on time.`;
+  if (!biggest || Math.abs(biggest.delta) < 3) {
+    return { main: 'Balanced reallocation this quarter', sub: 'No major tradeoffs from last quarter' };
   }
-  if (biggest.delta > 10) {
-    const shrank = changes.find(c => c.delta < 0);
-    return `${biggest.name} grew ${biggest.delta} points at the cost of ${shrank?.name ?? 'other areas'}.`;
+  if (biggest.delta < 0) {
+    return {
+      main: `↓ Lower focus on ${biggest.name.toLowerCase()} this quarter`,
+      sub: 'Can recover next quarter',
+    };
   }
-  return `Modest reallocation — ${biggest.name} is the biggest mover at ${biggest.delta > 0 ? '+' : ''}${biggest.delta} points.`;
+  const shrank = changes.find(c => c.delta < 0);
+  return {
+    main: `↑ More focus on ${biggest.name.toLowerCase()} this quarter`,
+    sub: shrank ? `${shrank.name} scales back to make room` : 'Other areas scale back',
+  };
 }
 
 /** Derive "What this quarter is NOT" bullets from current segments. */

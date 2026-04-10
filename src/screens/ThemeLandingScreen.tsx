@@ -22,6 +22,52 @@ export function ThemeLandingScreen({ themes, onSelectTheme }: ThemeLandingScreen
     color: DEFAULT_COLORS[theme.id] ?? theme.model[0]?.color ?? '#4A6CF7',
   }));
 
+  // Sort by allocation descending so highest focus area is first
+  const sortedThemes = [...themes].sort((a, b) => b.allocation - a.allocation);
+  const otherThemes = sortedThemes.slice(1);
+
+  const renderCard = (theme: typeof themes[0], index: number, highlighted = false) => {
+    const scored = theme.initiatives.filter(i => i.status === 'scored').length;
+    const total = theme.initiatives.length;
+    const progress = total > 0 ? scored / total : 0;
+    const progressLabel = scored === 0 ? 'Not started' : `${scored}/${total} scored`;
+
+    return (
+      <motion.button
+        key={theme.id}
+        className={`theme-card${highlighted ? ' theme-card--highlighted' : ''}`}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.04 }}
+        whileTap={{ scale: 0.985 }}
+        onClick={() => { audio.playChipSelect(); haptic.tap(); onSelectTheme(theme.id); }}
+      >
+        <div className="theme-card-header">
+          <span className="theme-card-icon">{theme.icon}</span>
+          <div className="theme-card-copy">
+            <p className="theme-card-name">{theme.name}</p>
+            <p className="theme-card-meta">
+              {theme.allocation}% allocation · {theme.engWeeks} eng-wks · {total} initiatives
+            </p>
+          </div>
+          <span className="theme-card-arrow">›</span>
+        </div>
+
+        <div className="theme-card-progress">
+          <div className="theme-card-progress-bar">
+            <motion.div
+              className="theme-card-progress-fill"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress * 100}%` }}
+              transition={{ delay: 0.15 + index * 0.04, duration: 0.35 }}
+            />
+          </div>
+          <span className="theme-card-progress-label">{progressLabel}</span>
+        </div>
+      </motion.button>
+    );
+  };
+
   return (
     <motion.div
       className="screen"
@@ -31,7 +77,7 @@ export function ThemeLandingScreen({ themes, onSelectTheme }: ThemeLandingScreen
     >
       <div className="screen-inner theme-landing-layout">
         <div className="theme-landing-header">
-          <h2 className="theme-landing-title">Choose a theme to score</h2>
+          <h2 className="theme-landing-title">Start with your highest focus area</h2>
           <p className="theme-landing-subtitle">
             {totalWeeks} eng-weeks across {themes.length} themes
           </p>
@@ -42,49 +88,22 @@ export function ThemeLandingScreen({ themes, onSelectTheme }: ThemeLandingScreen
           <p className="theme-allocation-caption">Current theme allocation</p>
         </div>
 
-        <div className="theme-cards">
-          {themes.map((theme, index) => {
-            const scored = theme.initiatives.filter(initiative => initiative.status === 'scored').length;
-            const total = theme.initiatives.length;
-            const progress = total > 0 ? scored / total : 0;
-
-            return (
-              <motion.button
-                key={theme.id}
-                className="theme-card"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.04 }}
-                whileTap={{ scale: 0.985 }}
-                onClick={() => { audio.playChipSelect(); haptic.tap(); onSelectTheme(theme.id); }}
-              >
-                <div className="theme-card-header">
-                  <span className="theme-card-icon">{theme.icon}</span>
-                  <div className="theme-card-copy">
-                    <p className="theme-card-name">{theme.name}</p>
-                    <p className="theme-card-meta">
-                      {theme.allocation}% allocation | {theme.engWeeks} eng-wks | {total} initiatives
-                    </p>
-                  </div>
-                  <span className="theme-card-arrow">{'>'}</span>
-                </div>
-
-                <div className="theme-card-progress">
-                  <div className="theme-card-progress-bar">
-                    <motion.div
-                      className="theme-card-progress-fill"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progress * 100}%` }}
-                      transition={{ delay: 0.15 + index * 0.04, duration: 0.35 }}
-                    />
-                  </div>
-                  <span className="theme-card-progress-label">{scored}/{total} scored</span>
-                </div>
-              </motion.button>
-            );
-          })}
+        {/* Top card — highlighted */}
+        <div className="theme-cards theme-cards--top">
+          {sortedThemes.slice(0, 1).map((theme, i) => renderCard(theme, i, true))}
         </div>
+
+        {/* Rest */}
+        {otherThemes.length > 0 && (
+          <>
+            <p className="theme-section-label">Other areas</p>
+            <div className="theme-cards">
+              {otherThemes.map((theme, i) => renderCard(theme, i + 1, false))}
+            </div>
+          </>
+        )}
       </div>
     </motion.div>
   );
 }
+

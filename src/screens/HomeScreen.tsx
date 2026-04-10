@@ -49,33 +49,50 @@ export function HomeScreen({ state, onPlan }: HomeScreenProps) {
   return (
     <motion.div className="screen" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <div className="screen-inner home-layout">
-        {/* Quarter label */}
-        <p className="home-quarter-label">
-          {state.currentQuarter} · {state.weeksLeft} weeks left
-        </p>
 
-        {/* THE BAR — hero element */}
-        <motion.div
-          className="home-bar-wrapper"
-          whileTap={{ scale: 0.998 }}
-          onClick={handleBarTap}
-          style={{ cursor: 'pointer' }}
-          initial={{ opacity: 0, y: 12 }}
+        {/* 1. Insight — top priority, replaces metadata label */}
+        <motion.p
+          className="home-insight"
+          initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
         >
-          <AllocationBar segments={state.segments} />
-        </motion.div>
+          {state.currentQuarter} is on track — but growth is slowing
+        </motion.p>
 
-        {/* Status + CTA row */}
-        <div className="home-footer">
-          <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
-            {state.onTrack} of {state.totalInitiatives} on track
-          </p>
-          <motion.button className="btn-primary" onClick={() => { haptic.tap(); onPlan(); }} whileTap={{ scale: 0.97 }}>
-            Plan {state.nextQuarter} →
-          </motion.button>
+        {/* 2. Bar with label */}
+        <div className="home-bar-section">
+          <p className="home-bar-label">Your current focus</p>
+          <motion.div
+            className="home-bar-wrapper"
+            whileTap={{ scale: 0.998 }}
+            onClick={handleBarTap}
+            style={{ cursor: 'pointer' }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <AllocationBar segments={state.segments} />
+          </motion.div>
         </div>
+
+        {/* 3. Status + CTA */}
+        <div className="home-footer">
+          <p className="home-status">
+            {state.onTrack} of {state.totalInitiatives} priorities on track
+          </p>
+          <div className="home-cta-group">
+            <motion.button
+              className="btn-primary"
+              onClick={() => { haptic.tap(); onPlan(); }}
+              whileTap={{ scale: 0.97 }}
+            >
+              Plan next quarter →
+            </motion.button>
+            <p className="home-cta-hint">Takes ~10 min</p>
+          </div>
+        </div>
+
       </div>
     </motion.div>
   );

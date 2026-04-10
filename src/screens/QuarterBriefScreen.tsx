@@ -5,29 +5,20 @@ import { useAudio } from '../hooks/useAudio';
 import { useHaptic } from '../hooks/useHaptic';
 
 interface QuarterBriefScreenProps {
-  nextQuarter: string;
   currentQuarter: string;
   segments: Segment[];
   onStart: () => void;
   onBack: () => void;
 }
 
-const PHASE1 = [
-  'Set context from Q2 baseline',
-  'Define strategic themes',
-  'Allocate capacity across themes',
-  'Scenario & stakeholder review',
-  'Lock your allocation',
-];
-
-const PHASE2 = [
-  'Build a scoring model per theme',
-  'Score & rank initiatives',
-  'Generate audience-ready plan',
+const OUTCOMES = [
+  'Identify what changed',
+  'Adjust your focus',
+  'Lock your plan',
 ];
 
 export function QuarterBriefScreen({
-  nextQuarter, currentQuarter, segments, onStart, onBack,
+  currentQuarter, segments, onStart, onBack,
 }: QuarterBriefScreenProps) {
   const audio  = useAudio();
   const haptic = useHaptic();
@@ -42,57 +33,36 @@ export function QuarterBriefScreen({
     >
       <div className="screen-inner qb-layout">
 
-        {/* Header */}
-        <div className="qb-header">
-          <div>
-            <h2 className="qb-title">Planning {nextQuarter}</h2>
-            <p className="qb-subtitle">
-              Two phases — finish Phase 1 now, come back to Phase 2 anytime.
-            </p>
-          </div>
-          <span className="qb-total-time">~20 min</span>
-        </div>
-
-        {/* Phase 1 */}
+        {/* Title */}
         <motion.div
-          className="qb-phase-block"
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
+          transition={{ delay: 0.06 }}
         >
-          <div className="qb-phase-header">
-            <span className="qb-phase-badge qb-phase-badge--1">Phase 1</span>
-            <span className="qb-phase-name">Strategic alignment</span>
-            <span className="qb-phase-time">~7 min</span>
-          </div>
-          <ul className="qb-step-list">
-            {PHASE1.map((label, i) => (
-              <li key={label} className="qb-step">
-                <span className="qb-step-n">{i + 1}</span>
-                <span className="qb-step-label">{label}</span>
-              </li>
-            ))}
-          </ul>
+          <h2 className="qb-title">Plan your next quarter</h2>
+          <p className="qb-time-hint">~7 min</p>
         </motion.div>
 
-        {/* Phase 2 */}
+        {/* Outcome list */}
         <motion.div
-          className="qb-phase-block qb-phase-block--dim"
+          className="qb-outcomes"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.14 }}
+          transition={{ delay: 0.12 }}
         >
-          <div className="qb-phase-header">
-            <span className="qb-phase-badge qb-phase-badge--2">Phase 2</span>
-            <span className="qb-phase-name">Initiative prioritisation</span>
-            <span className="qb-phase-time">~15 min</span>
-          </div>
-          <ul className="qb-step-list">
-            {PHASE2.map((label, i) => (
-              <li key={label} className="qb-step">
-                <span className="qb-step-n">{i + 6}</span>
-                <span className="qb-step-label">{label}</span>
-              </li>
+          <p className="qb-outcomes-intro">In the next 7 minutes, you'll:</p>
+          <ul className="qb-outcome-list">
+            {OUTCOMES.map((outcome, i) => (
+              <motion.li
+                key={outcome}
+                className="qb-outcome-item"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.18 + i * 0.07 }}
+              >
+                <span className="qb-outcome-dot" />
+                <span className="qb-outcome-label">{outcome}</span>
+              </motion.li>
             ))}
           </ul>
         </motion.div>
@@ -102,35 +72,34 @@ export function QuarterBriefScreen({
           className="qb-snapshot"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.35 }}
         >
           <p className="qb-snapshot-label">Your {currentQuarter} strategic themes & allocation</p>
           <AllocationBar segments={segments} />
         </motion.div>
 
         {/* Actions */}
-        <div className="qb-actions">
+        <motion.div
+          className="qb-actions"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.42 }}
+        >
           <motion.button
             className="btn-primary btn-large"
             whileTap={{ scale: 0.97 }}
             onClick={() => { audio.playTransition(); haptic.tap(); onStart(); }}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
           >
-            Start Phase 1 →
+            Start planning →
           </motion.button>
           <motion.button
             className="btn-ghost qb-back-btn"
             whileTap={{ scale: 0.97 }}
             onClick={() => { audio.playNavigate(); haptic.tap(); onBack(); }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
           >
             ← Back
           </motion.button>
-        </div>
+        </motion.div>
 
       </div>
     </motion.div>

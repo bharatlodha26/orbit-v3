@@ -1,11 +1,12 @@
-import { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AllocationBar } from '../components/AllocationBar';
 import { PlanningProgress } from '../components/PlanningProgress';
 import { ReasoningPanel } from '../components/ReasoningPanel';
 import type { AppState, Scenario, Segment, PlanningStep, ReasoningEntry } from '../types';
-import { generateNarrative, generateTradeoff } from '../data/defaults';
+import { generateProposalInsight, generateTradeoff } from '../data/defaults';
 import { useAudio } from '../hooks/useAudio';
+import { useHaptic } from '../hooks/useHaptic';
 
 interface ProposalScreenProps {
   state: AppState;
@@ -28,23 +29,36 @@ export function ProposalScreen({
   onViewScenarios,
   onStepClick,
 }: ProposalScreenProps) {
-  const narrative = useMemo(() => generateNarrative(state.segments), [state.segments]);
+  const insight  = useMemo(() => generateProposalInsight(state.segments), [state.segments]);
   const tradeoff = useMemo(() => generateTradeoff(state.segments, prevSegments), [state.segments, prevSegments]);
-  const audio = useAudio();
+  const [dragHint, setDragHint] = useState<string | null>(null);
+  const audio  = useAudio();
+  const haptic = useHaptic();
 
   const handleSegmentsChange = (segments: Segment[]) => {
     onSegmentsChange(segments);
     audio.playSegmentChange(segments[0].percentage, true);
   };
 
+  const handleDragStart = (leftId: string, rightId: string) => {
+    const left  = state.segments.find(s => s.id === leftId);
+    const right = state.segments.find(s => s.id === rightId);
+    if (left && right) {
+      setDragHint(`Adjusting ${left.name} reduces: ${right.name}`);
+    }
+  };
+
   const handleTryAnother = () => {
+    const insight = generateProposalInsight(state.segments);
     const id = `scenario-${Date.now()}`;
     onSaveScenario({
       id,
-      name: narrative,
-      narrative,
+      name: insight.headline,
+      narrative: insight.headline,
       segments: state.segments.map(s => ({ ...s })),
     });
+    audio.playTap();
+    haptic.tap();
     if (state.scenarios.length >= 1) {
       onViewScenarios();
     }
@@ -65,64 +79,87 @@ export function ProposalScreen({
           onStepClick={onStepClick}
         />
 
-        {/* Header */}
-        <p className="screen-section-label">{state.nextQuarter} Proposal</p>
+        {/* Recommendation label */}
+        <p className="proposal-rec-label">Based on your input, we recommend:</p>
 
         {/* Interactive bar */}
         <div>
           <AllocationBar
             segments={state.segments}
             onSegmentsChange={handleSegmentsChange}
+            onDragStart={handleDragStart}
+            onDragEnd={() => setDragHint(null)}
             interactive={true}
             showDeltas={true}
             prevSegments={prevSegments}
           />
-          <p className="bar-hint-label">— drag any boundary to adjust —</p>
+          <AnimatePresence mode="wait">
+            {dragHint ? (
+              <motion.p
+                key="drag-hint"
+                className="proposal-drag-hint"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+              >
+                {dragHint}
+              </motion.p>
+            ) : (
+              <motion.p
+                key="bar-hint"
+                className="bar-hint-label"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                — drag any boundary to adjust —
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Narrative sentence */}
-        <motion.p
-          key={narrative}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="proposal-narrative"
-        >
-          "{narrative}"
-        </motion.p>
-
-        {/* Trade-off callout */}
+        {/* Insight — two lines, no quotes */}
         <motion.div
-          key={tradeoff}
+          key={insight.headline}
+          className="proposal-insight"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="tradeoff-callout"
         >
-          <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-            <span style={{ marginRight: 6 }}>⚠</span>
-            {tradeoff}
-          </p>
+          <p className="proposal-insight-headline">{insight.headline}</p>
+          <p className="proposal-insight-subtitle">{insight.subtitle}</p>
+        </motion.div>
+
+        {/* Trade-off — positive framing */}
+        <motion.div
+          key={tradeoff.main}
+          className="proposal-tradeoff"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <p className="proposal-tradeoff-main">{tradeoff.main}</p>
+          <p className="proposal-tradeoff-sub">{tradeoff.sub}</p>
         </motion.div>
 
         {/* Reasoning panel — expandable */}
         <ReasoningPanel reasoning={reasoning} />
 
-        {/* Action buttons */}
-        <div style={{ display: 'flex', gap: 12 }}>
+        {/* CTA: primary Lock plan, secondary Try a different scenario */}
+        <div className="proposal-actions">
           <motion.button
-            className="btn-primary"
-            style={{ flex: 1 }}
+            className="btn-primary btn-large"
             whileTap={{ scale: 0.97 }}
-            onClick={onLock}
+            onClick={() => { audio.playSave(); haptic.tap(); onLock(); }}
           >
-            Lock it
+            Lock plan
           </motion.button>
           <motion.button
-            className="btn-secondary"
-            style={{ flex: 1 }}
+            className="proposal-try-btn"
             whileTap={{ scale: 0.97 }}
             onClick={handleTryAnother}
           >
-            Try another scenario
+            Try a different scenario
           </motion.button>
         </div>
       </div>

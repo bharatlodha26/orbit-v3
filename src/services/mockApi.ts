@@ -17,6 +17,9 @@ export interface ConversationHistory {
 export interface GeneratedTurn {
   question: string;
   chips: string[];
+  defaultChipIndex?: number;   // pre-selected chip index (optional)
+  helperText?: string;         // shown above chips
+  hideTextInput?: boolean;     // suppress free-text input for this turn
   planningStep: PlanningStep;
   barUpdateFn: (segments: Segment[], answer: string) => Segment[];
   generateReasoning: (answer: string, segments: Segment[]) => ReasoningEntry[];
@@ -172,13 +175,15 @@ function buildTurn(
     case 0:
       return {
         planningStep: 'context',
-        question: "What's the biggest shift heading into next quarter?",
+        question: 'What changed since last quarter?',
+        helperText: 'Pick what feels most true — you can change later',
+        defaultChipIndex: 0,
         chips: [
-          "Closing enterprise deals is more urgent than last quarter",
-          "A key customer is at risk of churning soon",
-          "We have a hard compliance or security deadline coming up",
-          "There's significant technical debt slowing us down",
-          "Things are roughly the same as last quarter",
+          'Sales cycles are getting longer',
+          'A key account may churn',
+          'A major deadline is coming',
+          'Product delivery is slowing',
+          'Nothing significant changed',
         ],
         barUpdateFn: (segs, answer) =>
           buildSegmentsFromSignals(detectSignals(answer), segs),

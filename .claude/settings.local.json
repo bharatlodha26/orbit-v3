@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(del \"D:\\\\GitHub\\\\strategic-allocation-navigator\\\\src\\\\_plan-styles.css\")",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

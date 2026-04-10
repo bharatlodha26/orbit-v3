@@ -13,6 +13,7 @@ import { ScenarioComparison } from './screens/ScenarioComparison';
 import { StakeholderScreen } from './screens/StakeholderScreen';
 import { LockScreen } from './screens/LockScreen';
 import { PostLockScreen } from './screens/PostLockScreen';
+import { ContextIngestionScreen } from './screens/ContextIngestionScreen';
 import { ThemeLandingScreen } from './screens/ThemeLandingScreen';
 import { ScoringModelScreen } from './screens/ScoringModelScreen';
 import { InitiativeScoringScreen } from './screens/InitiativeScoringScreen';
@@ -170,8 +171,13 @@ export default function App() {
   // ── Judgment Structurer handlers ──────────────────────────
 
   const handleStartScoring = () => {
+    // Pre-build themes so they're ready when ingestion completes
     const themes = buildThemesFromSegments(workingSegments);
     setJudgment({ themes, activeThemeId: null, modelConfirmed: false });
+    go('context-ingestion');
+  };
+
+  const handleIngestionComplete = () => {
     go('theme-landing');
   };
 
@@ -261,7 +267,6 @@ export default function App() {
           {currentScreen === 'quarter-brief' && (
             <QuarterBriefScreen
               key="quarter-brief"
-              nextQuarter={state.nextQuarter}
               currentQuarter={state.currentQuarter}
               segments={state.segments}
               onStart={handleBriefStart}
@@ -326,6 +331,12 @@ export default function App() {
               onStakeholderLoop={() => go('stakeholder')}
               onHome={handleHome}
               onStartScoring={handleStartScoring}
+            />
+          )}
+          {currentScreen === 'context-ingestion' && (
+            <ContextIngestionScreen
+              key="context-ingestion"
+              onComplete={handleIngestionComplete}
             />
           )}
           {currentScreen === 'theme-landing' && (
