@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import type { AppState, Scenario, Screen, Segment, ThinkingTrailEntry, PlanningStep, ReasoningEntry, JudgmentState, Initiative, ScoringDimension } from './types';
+import type { AppState, Scenario, Screen, Segment, ThinkingTrailEntry, PlanningStep, ReasoningEntry, JudgmentState, Initiative, ScoringDimension, PlanState, PlanInitiative } from './types';
 
 import { Q2_SEGMENTS } from './data/defaults';
 import { buildThemesFromSegments } from './services/scoringMockApi';
+import { buildPlanFromJudgment } from './services/planMockApi';
 import { AppHeader } from './components/AppHeader';
 import { HomeScreen } from './screens/HomeScreen';
 import { ConversationScreen } from './screens/ConversationScreen';
@@ -17,6 +18,8 @@ import { ScoringModelScreen } from './screens/ScoringModelScreen';
 import { InitiativeScoringScreen } from './screens/InitiativeScoringScreen';
 import { RankedReviewScreen } from './screens/RankedReviewScreen';
 import { ShareExportScreen } from './screens/ShareExportScreen';
+import { PlanCanvasScreen } from './screens/PlanCanvasScreen';
+import { PlanViewerScreen } from './screens/PlanViewerScreen';
 import './index.css';
 
 const INITIAL_STATE: AppState = {
@@ -52,6 +55,8 @@ function getHeaderContext(screen: Screen, nextQuarter: string): string {
     case 'initiative-scoring': return `${nextQuarter} Initiative Scoring`;
     case 'ranked-review':      return `${nextQuarter} Ranked Review`;
     case 'share-export':       return `${nextQuarter} Export`;
+    case 'plan-canvas':        return `${nextQuarter} Plan`;
+    case 'plan-viewer':        return `${nextQuarter} Audience Views`;
     default:                   return 'Compass';
   }
 }
@@ -84,6 +89,8 @@ export default function App() {
     activeThemeId: null,
     modelConfirmed: false,
   });
+
+  const [planState, setPlanState] = useState<PlanState | null>(null);
 
   useEffect(() => {
     document.documentElement.dataset.theme = themeMode;
@@ -205,6 +212,28 @@ export default function App() {
     }));
   };
 
+  // ── Plan Renderer handlers ───────────────────────────────────
+
+  const handleBuildPlan = () => {
+    const built = buildPlanFromJudgment(judgment.themes, state.nextQuarter);
+    setPlanState(built);
+    go('plan-canvas');
+  };
+
+  const handleUpdatePlanInitiative = useCallback((themeId: string, updated: PlanInitiative) => {
+    setPlanState(ps => {
+      if (!ps) return ps;
+      return {
+        ...ps,
+        themes: ps.themes.map(t =>
+          t.id === themeId
+            ? { ...t, initiatives: t.initiatives.map(i => i.id === updated.id ? updated : i) }
+            : t
+        ),
+      };
+    });
+  }, []);
+
   const activeTheme = judgment.themes.find(t => t.id === judgment.activeThemeId) ?? null;
 
   const currentScreen = state.currentScreen;
@@ -322,7 +351,24 @@ export default function App() {
               themes={judgment.themes}
               quarter={state.nextQuarter}
               onBackToThemes={() => go('theme-landing')}
+              onBuildPlan={handleBuildPlan}
               onHome={handleHome}
+            />
+          )}
+          {currentScreen === 'plan-canvas' && planState && (
+            <PlanCanvasScreen
+              key="plan-canvas"
+              plan={planState}
+              onUpdateInitiative={handleUpdatePlanInitiative}
+              onPreview={() => go('plan-viewer')}
+              onBack={() => go('share-export')}
+            />
+          )}
+          {currentScreen === 'plan-viewer' && planState && (
+            <PlanViewerScreen
+              key="plan-viewer"
+              plan={planState}
+              onBack={() => go('plan-canvas')}
             />
           )}
         </AnimatePresence>

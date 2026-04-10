@@ -6,10 +6,11 @@ interface ShareExportScreenProps {
   themes: ScoringTheme[];
   quarter: string;
   onBackToThemes: () => void;
+  onBuildPlan: () => void;
   onHome: () => void;
 }
 
-export function ShareExportScreen({ themes, quarter, onBackToThemes, onHome }: ShareExportScreenProps) {
+export function ShareExportScreen({ themes, quarter, onBackToThemes, onBuildPlan, onHome }: ShareExportScreenProps) {
 
   const handleExportOnePager = () => {
     const lines: string[] = [
@@ -166,6 +167,18 @@ export function ShareExportScreen({ themes, quarter, onBackToThemes, onHome }: S
           ))}
         </div>
 
+        {/* Build Plan CTA */}
+        <motion.button
+          className="btn-primary btn-large share-build-plan-btn"
+          whileTap={{ scale: 0.97 }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          onClick={onBuildPlan}
+        >
+          Build Quarter Plan →
+        </motion.button>
+
         {/* Navigation */}
         <div style={{ display: 'flex', gap: 12 }}>
           <motion.button
@@ -177,8 +190,8 @@ export function ShareExportScreen({ themes, quarter, onBackToThemes, onHome }: S
             Score more themes
           </motion.button>
           <motion.button
-            className="btn-primary"
-            style={{ flex: 1 }}
+            className="btn-ghost"
+            style={{ flex: 1, justifyContent: 'center' }}
             whileTap={{ scale: 0.97 }}
             onClick={onHome}
           >

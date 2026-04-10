@@ -59,7 +59,9 @@ export type Screen =
   | 'scoring-model'
   | 'initiative-scoring'
   | 'ranked-review'
-  | 'share-export';
+  | 'share-export'
+  | 'plan-canvas'
+  | 'plan-viewer';
 
 export type PlanningStep = 'context' | 'themes' | 'allocate' | 'review' | 'lock';
 
@@ -141,3 +143,48 @@ export interface JudgmentState {
   activeThemeId: string | null;
   modelConfirmed: boolean;
 }
+
+// ── Plan Renderer types (Solution 4) ────────────────────────
+
+export interface PlanInitiative {
+  id: string;
+  name: string;
+  themeId: string;
+  effortWeeks: number;
+  rank: number;
+  composite: number;
+  // Executive layer
+  okrMapping: string;
+  businessImpact: string;
+  successMetric: string;
+  // Engineering layer
+  assignedTeam: string;
+  sprintBreakdown: string;
+  techRisk: 'Low' | 'Medium' | 'High';
+  isCarryOver: boolean;
+  dependencies: string[];
+  timelineStart: number; // week number (1-based)
+  timelineEnd: number;
+  // GTM layer
+  customerFacingName: string;
+  customerFacingDesc: string;
+  targetShipWeek: number;
+  salesCanReferenceWeek: number;
+}
+
+export interface PlanTheme {
+  id: string;
+  name: string;
+  icon: string;
+  allocation: number;
+  engWeeks: number;
+  color: string;
+  initiatives: PlanInitiative[];
+}
+
+export interface PlanState {
+  themes: PlanTheme[];
+  quarter: string;
+}
+
+export type PlanAudienceView = 'executive' | 'engineering' | 'gtm';
