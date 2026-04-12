@@ -1188,6 +1188,147 @@ h1,h2,h3,h4 { font-weight: 700; }
   color: var(--border);
 }
 
+/* ─── Conversation Prep screen ──────────────────────────── */
+
+.cp-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 20px;
+}
+
+/* Header: small icon inline with title */
+.cp-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.cp-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 10px;
+  font-size: 16px;
+  margin-top: 2px;
+}
+
+.cp-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cp-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+  letter-spacing: -0.2px;
+}
+
+.cp-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.cp-subtitle--done {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.cp-context {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.02em;
+}
+
+/* Sources — 2-column grid */
+.cp-sources {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+
+.cp-source-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cp-source-check {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.cp-source-label {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.cp-source-label strong {
+  font-weight: 600;
+}
+
+/* Ready section */
+.cp-ready {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cp-ready-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+}
+
+.cp-bullet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cp-bullet {
+  font-size: 13px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.4;
+}
+
+.cp-bullet-dot {
+  color: var(--accent);
+  font-size: 15px;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+/* CTA */
+.cp-cta {
+  margin-top: 4px;
+}
+
 /* ─── Context Ingestion screen ──────────────────────────── */
 
 .ci-layout {
@@ -1247,6 +1388,13 @@ h1,h2,h3,h4 { font-weight: 700; }
   color: var(--text-primary);
   line-height: 1.25;
   letter-spacing: -0.2px;
+}
+
+.ci-prep-context {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+  letter-spacing: 0.02em;
 }
 
 .ci-subtitle {

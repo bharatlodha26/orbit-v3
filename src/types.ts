@@ -50,6 +50,7 @@ export interface Scenario {
 export type Screen =
   | 'home'
   | 'quarter-brief'
+  | 'conversation-prep'
   | 'conversation'
   | 'proposal'
   | 'scenarios'

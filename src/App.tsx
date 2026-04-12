@@ -22,6 +22,7 @@ import { ShareExportScreen } from './screens/ShareExportScreen';
 import { PlanCanvasScreen } from './screens/PlanCanvasScreen';
 import { PlanViewerScreen } from './screens/PlanViewerScreen';
 import { QuarterBriefScreen } from './screens/QuarterBriefScreen';
+import { ConversationPrepScreen } from './screens/ConversationPrepScreen';
 import './index.css';
 
 const INITIAL_STATE: AppState = {
@@ -47,6 +48,7 @@ function getHeaderContext(screen: Screen, nextQuarter: string): string {
   switch (screen) {
     case 'home':               return 'Dashboard';
     case 'quarter-brief':      return `${nextQuarter} · Planning overview`;
+    case 'conversation-prep':  return `${nextQuarter} · Preparing your session`;
     case 'conversation':       return `${nextQuarter} · Set strategic context`;
     case 'proposal':           return `${nextQuarter} · Review allocation`;
     case 'scenarios':          return `${nextQuarter} · Scenario comparison`;
@@ -111,6 +113,10 @@ export default function App() {
   const handleBriefStart = () => {
     setWorkingSegments([...state.segments]);
     setReasoning([]);
+    go('conversation-prep');
+  };
+
+  const handleConvPrepReady = () => {
     go('conversation');
   };
 
@@ -281,6 +287,14 @@ export default function App() {
               segments={state.segments}
               onStart={handleBriefStart}
               onBack={() => go('home')}
+            />
+          )}
+          {currentScreen === 'conversation-prep' && (
+            <ConversationPrepScreen
+              key="conversation-prep"
+              currentQuarter={state.currentQuarter}
+              nextQuarter={state.nextQuarter}
+              onReady={handleConvPrepReady}
             />
           )}
           {currentScreen === 'conversation' && (

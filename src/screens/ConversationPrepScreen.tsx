@@ -3,46 +3,50 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAudio } from '../hooks/useAudio';
 import { useHaptic } from '../hooks/useHaptic';
 
-interface ContextIngestionScreenProps {
-  onComplete: () => void;
+interface ConversationPrepScreenProps {
+  currentQuarter: string;
+  nextQuarter: string;
+  onReady: () => void;
 }
 
 const SOURCES = [
-  { label: 'Gmail',      detail: 'customer threads' },
-  { label: 'Confluence', detail: 'roadmap docs' },
-  { label: 'CRM',        detail: 'deal pipeline' },
-  { label: 'Slack',      detail: 'key discussions' },
+  { label: 'Confluence', detail: 'roadmap & OKR docs' },
+  { label: 'Gmail',      detail: 'team & customer threads' },
+  { label: 'Slack',      detail: 'strategy discussions' },
+  { label: 'Calendar',   detail: 'planning meetings & 1:1s' },
 ];
 
-const INSIGHTS = [
-  '3 enterprise deals at risk',
-  '1 key account showing churn signals',
-  'Delays in delivery timelines',
+const READY_BULLETS = [
+  '4 questions tailored to your context',
+  '2 strategic shifts detected since last quarter',
+  'Allocation suggestions pre-loaded',
 ];
 
 const SCAN_STEPS = [
-  'Analyzing recent signals…',
-  'Reading customer threads…',
-  'Scanning deal pipeline…',
-  'Reviewing key discussions…',
+  "Reviewing last quarter's allocation…",
+  'Scanning for strategic shifts…',
+  'Reading signals across tools…',
+  'Drafting questions for your session…',
 ];
 
-// Timing (ms from mount)
-const SOURCE_START  = 350;
+// Timing (ms)
+const SOURCE_START  = 300;
 const SOURCE_STEP   = 420;
-const INSIGHT_START = SOURCE_START + SOURCE_STEP * SOURCES.length + 280;
-const INSIGHT_STEP  = 230;
-const CTA_APPEAR    = INSIGHT_START + INSIGHT_STEP * INSIGHTS.length + 380;
+const READY_START   = SOURCE_START + SOURCE_STEP * SOURCES.length + 280;
+const BULLET_STEP   = 200;
+const CTA_APPEAR    = READY_START + BULLET_STEP * READY_BULLETS.length + 320;
 const SCAN_INTERVAL = 900;
 
-export function ContextIngestionScreen({ onComplete }: ContextIngestionScreenProps) {
-  const [scanIdx,         setScanIdx]         = useState(0);
-  const [scanDone,        setScanDone]        = useState(false);
-  const [visibleSources,  setVisibleSources]  = useState(0);
-  const [visibleInsights, setVisibleInsights] = useState(0);
-  const [showDetected,    setShowDetected]    = useState(false);
-  const [showCta,         setShowCta]         = useState(false);
-  const [done,            setDone]            = useState(false);
+export function ConversationPrepScreen({
+  currentQuarter, nextQuarter, onReady,
+}: ConversationPrepScreenProps) {
+  const [scanIdx,        setScanIdx]        = useState(0);
+  const [scanDone,       setScanDone]       = useState(false);
+  const [visibleSources, setVisibleSources] = useState(0);
+  const [showReady,      setShowReady]      = useState(false);
+  const [visibleBullets, setVisibleBullets] = useState(0);
+  const [showCta,        setShowCta]        = useState(false);
+  const [done,           setDone]           = useState(false);
 
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audio  = useAudio();
@@ -51,13 +55,13 @@ export function ContextIngestionScreen({ onComplete }: ContextIngestionScreenPro
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Cycle scan text until CTA appears
+    // Cycle scan narrative until CTA appears
     scanIntervalRef.current = setInterval(
       () => setScanIdx(i => (i + 1) % SCAN_STEPS.length),
       SCAN_INTERVAL,
     );
 
-    // Reveal each source
+    // Reveal each source with a tick
     SOURCES.forEach((_, i) => {
       timers.push(setTimeout(() => {
         setVisibleSources(i + 1);
@@ -66,17 +70,17 @@ export function ContextIngestionScreen({ onComplete }: ContextIngestionScreenPro
       }, SOURCE_START + SOURCE_STEP * i));
     });
 
-    // "Detected" heading
-    timers.push(setTimeout(() => setShowDetected(true), INSIGHT_START - 150));
+    // "Ready" heading
+    timers.push(setTimeout(() => setShowReady(true), READY_START - 120));
 
-    // Reveal each insight
-    INSIGHTS.forEach((_, i) => {
+    // Reveal each bullet
+    READY_BULLETS.forEach((_, i) => {
       timers.push(setTimeout(() => {
-        setVisibleInsights(i + 1);
-      }, INSIGHT_START + INSIGHT_STEP * i));
+        setVisibleBullets(i + 1);
+      }, READY_START + BULLET_STEP * i));
     });
 
-    // CTA — stop scan loop, mark done
+    // CTA — stop scan loop and show done state
     timers.push(setTimeout(() => {
       if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
       setScanDone(true);
@@ -96,7 +100,7 @@ export function ContextIngestionScreen({ onComplete }: ContextIngestionScreenPro
     setDone(true);
     audio.playSave();
     haptic.tap();
-    onComplete();
+    onReady();
   };
 
   return (
@@ -118,11 +122,11 @@ export function ContextIngestionScreen({ onComplete }: ContextIngestionScreenPro
             }
             transition={{ repeat: scanDone ? 0 : Infinity, duration: 2, ease: 'easeInOut' }}
           >
-            ◎
+            {scanDone ? '✦' : '✦'}
           </motion.div>
 
           <div className="cp-header-text">
-            <h2 className="cp-title">Understanding your quarter</h2>
+            <h2 className="cp-title">Getting your session ready</h2>
 
             <AnimatePresence mode="wait">
               {scanDone ? (
@@ -148,6 +152,10 @@ export function ContextIngestionScreen({ onComplete }: ContextIngestionScreenPro
                 </motion.p>
               )}
             </AnimatePresence>
+
+            <p className="cp-context">
+              Reviewing {currentQuarter} · Preparing for {nextQuarter}
+            </p>
           </div>
         </div>
 
@@ -172,20 +180,20 @@ export function ContextIngestionScreen({ onComplete }: ContextIngestionScreenPro
           ))}
         </div>
 
-        {/* ── Insights ───────────────────────────────────── */}
+        {/* ── Ready bullets ───────────────────────────────── */}
         <AnimatePresence>
-          {showDetected && (
+          {showReady && (
             <motion.div
               className="cp-ready"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <p className="cp-ready-label">Detected</p>
+              <p className="cp-ready-label">Ready for your session</p>
               <div className="cp-bullet-list">
-                {INSIGHTS.map((text, i) => (
+                {READY_BULLETS.map((text, i) => (
                   <AnimatePresence key={text}>
-                    {i < visibleInsights && (
+                    {i < visibleBullets && (
                       <motion.p
                         className="cp-bullet"
                         initial={{ opacity: 0, x: -6 }}
@@ -214,7 +222,7 @@ export function ContextIngestionScreen({ onComplete }: ContextIngestionScreenPro
               whileTap={{ scale: 0.97 }}
               onClick={handleClick}
             >
-              Review suggested initiatives →
+              See what's changed →
             </motion.button>
           )}
         </AnimatePresence>
