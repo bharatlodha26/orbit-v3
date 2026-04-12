@@ -1920,22 +1920,11 @@ h1,h2,h3,h4 { font-weight: 700; }
 .si-sliders-inner {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-top: 12px;
-}
-
-.si-slider-row {
-  display: flex;
-  flex-direction: column;
   gap: 4px;
+  padding-top: 10px;
 }
 
-.si-slider-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
+/* Dimension name styles */
 .si-slider-name {
   font-size: 12px;
   font-weight: 500;
@@ -1943,9 +1932,9 @@ h1,h2,h3,h4 { font-weight: 700; }
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
-/* Highest-weight dimension gets emphasis */
 .si-slider-name--primary {
   font-size: 13px;
   font-weight: 700;
@@ -1960,79 +1949,56 @@ h1,h2,h3,h4 { font-weight: 700; }
   border-radius: 4px;
   padding: 1px 5px;
   letter-spacing: 0.04em;
+  flex-shrink: 0;
 }
 
-.si-slider-value {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-tertiary);
-  min-width: 16px;
-  text-align: right;
-  transition: color 0.15s;
-}
-
-.si-slider-track-wrap {
-  position: relative;
-  padding-bottom: 10px;
-}
-
-.si-slider-input {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--border);
-  outline: none;
-  cursor: pointer;
-  position: relative;
-  z-index: 1;
-}
-
-.si-slider-input::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--dim-color, var(--accent));
-  border: 2px solid var(--surface);
-  box-shadow: 0 0 0 1.5px var(--dim-color, var(--accent));
-  cursor: pointer;
-  transition: transform 0.1s;
-}
-
-.si-slider-input::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--dim-color, var(--accent));
-  border: 2px solid var(--surface);
-  box-shadow: 0 0 0 1.5px var(--dim-color, var(--accent));
-  cursor: pointer;
-  transition: transform 0.1s;
-}
-
-.si-slider-input:active::-webkit-slider-thumb {
-  transform: scale(1.2);
-}
-
-.si-slider-pips {
+/* Rating row — single line layout */
+.si-rating-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  pointer-events: none;
+  gap: 12px;
+  padding: 3px 0;
 }
 
-.si-slider-pip {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--border);
-  transition: background 0.15s;
+.si-rating-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  width: 144px;
+}
+
+/* 5 pill buttons */
+.si-rating-pills {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.si-rating-pill {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.si-rating-pill:hover {
+  border-color: var(--pill-color, var(--accent));
+  color: var(--pill-color, var(--accent));
+  background: color-mix(in srgb, var(--pill-color, var(--accent)) 10%, transparent);
+}
+.si-rating-pill--selected {
+  border-color: transparent;
+  color: #fff;
 }
 
 .si-footer {

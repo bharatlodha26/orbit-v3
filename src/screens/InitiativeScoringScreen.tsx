@@ -233,44 +233,40 @@ export function InitiativeScoringScreen({
                 >
                   <div className="si-sliders-inner">
                     {sortedModel.map((dim, dimIdx) => {
-                      const val        = sliderScores[dim.id] ?? DEFAULT_SCORE;
-                      const isPrimary  = dimIdx === 0;
+                      const val       = sliderScores[dim.id] ?? DEFAULT_SCORE;
+                      const isPrimary = dimIdx === 0;
                       return (
-                        <div key={dim.id} className="si-slider-row">
-                          <div className="si-slider-meta">
+                        <div key={dim.id} className="si-rating-row">
+                          <div className="si-rating-label">
                             <span className={`si-slider-name${isPrimary ? ' si-slider-name--primary' : ''}`}>
                               {dim.shortName}
-                              {isPrimary && (
-                                <span className="si-slider-weight-badge">{dim.weight}%</span>
-                              )}
                             </span>
-                            <span className="si-slider-value" style={{ color: dim.color }}>
-                              {val}
-                            </span>
+                            <span className="si-slider-weight-badge">{dim.weight}%</span>
                           </div>
-                          <div className="si-slider-track-wrap">
-                            <input
-                              type="range"
-                              className="si-slider-input"
-                              min={1} max={5} step={1}
-                              value={val}
-                              style={{ '--dim-color': dim.color } as React.CSSProperties}
-                              onChange={e => {
-                                audio.playSegmentChange(Number(e.target.value), true);
-                                setSliderScores(prev => ({ ...prev, [dim.id]: Number(e.target.value) }));
-                              }}
-                              onMouseDown={() => haptic.grab()}
-                              onMouseUp={() => haptic.release()}
-                            />
-                            <div className="si-slider-pips">
-                              {[1,2,3,4,5].map(n => (
-                                <span
+                          <div className="si-rating-pills">
+                            {[1, 2, 3, 4, 5].map(n => {
+                              const isSelected = val === n;
+                              return (
+                                <motion.button
                                   key={n}
-                                  className="si-slider-pip"
-                                  style={{ background: val >= n ? dim.color : undefined }}
-                                />
-                              ))}
-                            </div>
+                                  className={`si-rating-pill${isSelected ? ' si-rating-pill--selected' : ''}`}
+                                  style={{
+                                    '--pill-color': dim.color,
+                                    background: isSelected ? dim.color : undefined,
+                                  } as React.CSSProperties}
+                                  whileHover={{ scale: 1.15, y: -2 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+                                  onClick={() => {
+                                    audio.playSegmentChange(n, true);
+                                    haptic.tap();
+                                    setSliderScores(prev => ({ ...prev, [dim.id]: n }));
+                                  }}
+                                >
+                                  {n}
+                                </motion.button>
+                              );
+                            })}
                           </div>
                         </div>
                       );
